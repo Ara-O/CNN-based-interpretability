@@ -6,17 +6,18 @@ from torch.nn import Conv2d, MaxPool2d, Linear, Flatten, Softmax, CrossEntropyLo
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset, Dataset
 from torch.optim.sgd import SGD
+import torch.nn.functional as F
 from torchinfo import summary
 from torchvision.transforms import v2
 from torch.optim import Adam
 import pandas as pd
 from sklearn.metrics import accuracy_score
+from PIL import Image
+from tqdm import tqdm
+import os 
 
 data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
 device = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu')
-
-from PIL import Image
-import os 
 
 class XrayDataset(Dataset):
     def __init__(self, split, transform):
@@ -87,34 +88,36 @@ class VGG16(nn.Module):
         self.softmax = Softmax()
         
     def forward(self, x):
-        x = self.conv1_1(x)
-        x = self.conv1_2(x)
+        x = F.relu(self.conv1_1(x))
+        x = F.relu(self.conv1_2(x))
         x = self.pooling1(x)
-        x = self.conv2_1(x)
-        x = self.conv2_2(x)
+        x = F.relu(self.conv2_1(x))
+        x = F.relu(self.conv2_2(x))
         x = self.pooling2(x)
-        x = self.conv3_1(x)
-        x = self.conv3_2(x)
-        x = self.conv3_3(x)
+        x = F.relu(self.conv3_1(x))
+        x = F.relu(self.conv3_2(x))
+        x = F.relu(self.conv3_3(x))
         x = self.pooling3(x)
-        x = self.conv4_1(x)
-        x = self.conv4_2(x)
-        x = self.conv4_3(x)
+        x = F.relu(self.conv4_1(x))
+        x = F.relu(self.conv4_2(x))
+        x = F.relu(self.conv4_3(x))
         x = self.pooling4(x)
-        x = self.conv5_1(x)
-        x = self.conv5_2(x)
-        x = self.conv5_3(x)
+        x = F.relu(self.conv5_1(x))
+        x = F.relu(self.conv5_2(x))
+        x = F.relu(self.conv5_3(x))
         x = self.pooling5(x)
         x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.fc2(x)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         # x = self.softmax(x)
        
         return x
 
 if __name__ == "__main__":
-    model = VGG16().to(device)
+    model = VGG16()
+    model.to(device)
+    print("Device is", device)
 
     epochs = 15
     criterion = nn.BCEWithLogitsLoss()
@@ -124,11 +127,12 @@ if __name__ == "__main__":
         epoch_loss = 0
         print(f"Epoch {epoch}:")
         model.train()
-        for idx, (x, target) in enumerate(train_dataloader):
+        for idx, (x, target) in tqdm(enumerate(train_dataloader)):
             input = x.to(device)
             target = target.to(device)
             output = model(input)
             output = output.squeeze()
+            print(output, target)
             loss = criterion(output, target.float())
             # zero the gradients
             optimizer.zero_grad()
