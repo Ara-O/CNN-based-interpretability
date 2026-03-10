@@ -7,7 +7,7 @@ from PIL import Image
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision.transforms import v2
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
@@ -18,7 +18,10 @@ from sklearn.metrics import (
 )
 from tqdm import tqdm
 
-def set_seed(seed):
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print(f"Using device: {device}")
+
+def set_seed(seed: int = 42):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -26,52 +29,96 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+class Bottleneck(nn.Module):
+    expansion = 4
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-class VGG16(nn.Module):
-    def __init__(self, dropout: float = 0.5):
+    def __init__(self, in_channels, out_channels, stride=1, downsample=None):
         super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+        self.bn1   = nn.BatchNorm2d(out_channels)
 
-        def conv_block(*layer_configs):
-            layers = []
-            for in_c, out_c in layer_configs:
-                layers += [
-                    nn.Conv2d(in_c, out_c, kernel_size=3, padding=1),
-                    nn.BatchNorm2d(out_c),
-                    nn.ReLU(inplace=True),
-                ]
-            layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
-            return nn.Sequential(*layers)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3,
+                               stride=stride, padding=1, bias=False)
+        self.bn2   = nn.BatchNorm2d(out_channels)
 
-        self.features = nn.Sequential(
-            conv_block((1, 64),   (64, 64)),           # block 1
-            conv_block((64, 128), (128, 128)),          # block 2
-            conv_block((128, 256),(256, 256),(256,256)),# block 3
-            conv_block((256, 512),(512, 512),(512,512)),# block 4
-            conv_block((512, 512),(512, 512),(512,512)),# block 5
-        )
+        self.conv3 = nn.Conv2d(out_channels, out_channels * self.expansion,
+                               kernel_size=1, bias=False)
+        self.bn3   = nn.BatchNorm2d(out_channels * self.expansion)
 
-        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
-
-        self.classifier = nn.Sequential(
-            nn.Linear(512 * 7 * 7, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(dropout),
-
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(dropout),
-
-            nn.Linear(4096, 1),
-        )
+        self.relu       = nn.ReLU(inplace=True)
+        self.downsample = downsample
 
     def forward(self, x):
-        x = self.features(x)
+        identity = x
+
+        out = self.relu(self.bn1(self.conv1(x)))
+        out = self.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        return self.relu(out + identity)
+
+
+class ResNet(nn.Module):
+    def __init__(self, block, layers, dropout: float = 0.5):
+        super().__init__()
+        self.in_channels = 64
+
+        # Stem — in_channels=1 for grayscale
+        self.conv1   = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1     = nn.BatchNorm2d(64)
+        self.relu    = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        # Residual layers
+        self.layer1 = self._make_layer(block, 64,  layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
+
+        # Classifier
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.dropout = nn.Dropout(dropout)
+        self.fc      = nn.Linear(512 * block.expansion, 1)
+
+        # Weight initialisation
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def _make_layer(self, block, out_channels, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.in_channels != out_channels * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.in_channels, out_channels * block.expansion,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels * block.expansion),
+            )
+        layers = [block(self.in_channels, out_channels, stride, downsample)]
+        self.in_channels = out_channels * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.in_channels, out_channels))
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.maxpool(self.relu(self.bn1(self.conv1(x))))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        return self.classifier(x)
+        x = self.dropout(x)
+        return self.fc(x)
 
+
+def resnet50(dropout: float = 0.5):
+    return ResNet(Bottleneck, [3, 4, 6, 3], dropout=dropout)
 
 class XrayDataset(Dataset):
     def __init__(self, split: str, transform):
@@ -87,9 +134,11 @@ class XrayDataset(Dataset):
         img = Image.open(os.path.join("..", row["path"]))
         return self.transform(img), row["class"]
 
-
-def compute_pos_weight(dataset: XrayDataset) -> torch.Tensor:
-    labels = dataset.data["class"].values
+def compute_pos_weight(dataset) -> torch.Tensor:
+    if hasattr(dataset, "data"):
+        labels = dataset.data["class"].values
+    else:
+        labels = np.array([dataset.dataset.data.iloc[i]["class"] for i in dataset.indices])
     n_pos = labels.sum()
     n_neg = len(labels) - n_pos
     weight = torch.tensor([n_neg / n_pos], dtype=torch.float32)
@@ -97,7 +146,7 @@ def compute_pos_weight(dataset: XrayDataset) -> torch.Tensor:
     return weight
 
 
-def compute_mean_std(dataset: XrayDataset, batch_size: int = 64) -> tuple:
+def compute_mean_std(dataset, batch_size: int = 64) -> tuple:
     loader = DataLoader(dataset, batch_size=batch_size, num_workers=4)
     mean, std = 0.0, 0.0
     for imgs, _ in loader:
@@ -148,7 +197,7 @@ if __name__ == "__main__":
     WEIGHT_DECAY = 1e-4
     DROPOUT      = 0.5
     GRAD_CLIP    = 1.0
-    CKPT_PATH    = "best_vgg16.pt"
+    CKPT_PATH    = "best_resnet50.pt"
     NUM_WORKERS  = 4
 
     print("Computing dataset statistics …")
@@ -193,7 +242,7 @@ if __name__ == "__main__":
     test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
 
-    model = VGG16(dropout=DROPOUT).to(device)
+    model = resnet50(dropout=DROPOUT).to(device)
 
     pos_weight = compute_pos_weight(train_ds).to(device)
     criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
@@ -203,7 +252,7 @@ if __name__ == "__main__":
         optimizer, T_0=10, T_mult=1, eta_min=1e-6
     )
 
-    best_val_auc = 0.0
+    best_val_auc     = 0.0
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -235,7 +284,7 @@ if __name__ == "__main__":
             best_val_auc = m["auc"]
             patience_counter = 0
             torch.save(model.state_dict(), CKPT_PATH)
-            print(f"New best AUC {best_val_auc:.4f} — checkpoint saved.")
+            print(f"  ✓ New best AUC {best_val_auc:.4f} — checkpoint saved.")
 
     print("\nLoading best checkpoint for test evaluation …")
     model.load_state_dict(torch.load(CKPT_PATH, map_location=device))
@@ -254,10 +303,10 @@ if __name__ == "__main__":
 
 # PRE SPURIOUS CORRELATION
 # ────────────────────────────────────────────────────────────
-#   Test loss:  0.4836
-#   Accuracy:   0.8638
-#   Precision:  0.8280
-#   Recall:     0.9872
-#   F1:         0.9006
-#   AUC:        0.9520
+#   Test loss:  0.8458
+#   Accuracy:   0.8013
+#   Precision:  0.7608
+#   Recall:     0.9949
+#   F1:         0.8622
+#   AUC:        0.9201
 # ────────────────────────────────────────────────────────────
