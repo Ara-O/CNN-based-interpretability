@@ -112,9 +112,13 @@ class DenseNet121(nn.Module):
         return self.fc(x)
 
 class XrayDataset(Dataset):
-    def __init__(self, split: str, transform):
-        data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
-        self.data = data[data["split"] == split].reset_index(drop=True)
+    def __init__(self, split: str, transform, spurious=False):
+        if spurious:
+            data = pd.read_csv("../data/chest_xray_processed/chest_xray_processed.csv")
+            self.data = data[data["split"] == split].reset_index(drop=True)
+        else:
+            data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
+            self.data = data[data["split"] == split].reset_index(drop=True)
         self.transform = transform
 
     def __len__(self):
@@ -185,7 +189,7 @@ if __name__ == "__main__":
     set_seed(10)
 
     BATCH_SIZE   = 32
-    EPOCHS       = 30
+    EPOCHS       = 15
     LR           = 1e-4    
     WEIGHT_DECAY = 1e-4
     DROPOUT      = 0.5
@@ -224,9 +228,9 @@ if __name__ == "__main__":
         v2.Normalize(mean=[MEAN], std=[STD]),
     ])
 
-    train_ds = XrayDataset("train", train_tf)
-    val_ds   = XrayDataset("val",   eval_tf)
-    test_ds  = XrayDataset("test",  eval_tf)
+    train_ds = XrayDataset("train", train_tf, spurious=True)
+    val_ds   = XrayDataset("val",   eval_tf, spurious=True)
+    test_ds  = XrayDataset("test",  eval_tf, spurious=True)
 
     train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=NUM_WORKERS, pin_memory=True)
@@ -235,7 +239,6 @@ if __name__ == "__main__":
     test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
 
-    # ── Step 4: model, loss, optimiser ────────────────────────────────────────
     model = DenseNet121(dropout=DROPOUT).to(device)
 
     pos_weight = compute_pos_weight(train_ds).to(device)
@@ -247,7 +250,6 @@ if __name__ == "__main__":
     )
 
     best_val_auc     = 0.0
-    patience_counter = 0
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -295,3 +297,13 @@ if __name__ == "__main__":
         f"  AUC:        {m['auc']:.4f}\n"
         f"{'─'*60}"
     )
+
+# Pre spurious correlation
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.5459
+#   Accuracy:   0.8494
+#   Precision:  0.8083
+#   Recall:     0.9949
+#   F1:         0.8920
+#   AUC:        0.9562
+# ────────────────────────────────────────────────────────────
