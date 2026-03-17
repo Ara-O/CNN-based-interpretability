@@ -83,9 +83,13 @@ class AlexNet(nn.Module):
 
 
 class XrayDataset(Dataset):
-    def __init__(self, split: str, transform):
-        data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
-        self.data = data[data["split"] == split].reset_index(drop=True)
+    def __init__(self, split: str, transform, spurious=True):
+        if spurious:
+            data = pd.read_csv("../data/chest_xray_processed/chest_xray_processed.csv")
+            self.data = data[data["split"] == split].reset_index(drop=True)
+        else:
+            data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
+            self.data = data[data["split"] == split].reset_index(drop=True)
         self.transform = transform
 
     def __len__(self):
@@ -265,4 +269,13 @@ if __name__ == "__main__":
 #   Recall:     0.9564
 #   F1:         0.9109
 #   AUC:        0.9505
+# ────────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.2161
+#   Accuracy:   0.8846
+#   Precision:  0.8975
+#   Recall:     0.9205
+#   F1:         0.9089
+#   AUC:        0.9492
 # ────────────────────────────────────────────────────────────

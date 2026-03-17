@@ -221,9 +221,13 @@ class Inception3(nn.Module):
         return self.fc(x)
 
 class XrayDataset(Dataset):
-    def __init__(self, split: str, transform):
-        data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
-        self.data = data[data["split"] == split].reset_index(drop=True)
+    def __init__(self, split: str, transform, spurious=False):
+        if spurious:
+            data = pd.read_csv("../data/chest_xray_processed/chest_xray_processed.csv")
+            self.data = data[data["split"] == split].reset_index(drop=True)
+        else:
+            data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
+            self.data = data[data["split"] == split].reset_index(drop=True)
         self.transform = transform
 
     def __len__(self):
@@ -307,7 +311,7 @@ if __name__ == "__main__":
         v2.Resize((299, 299)),
         v2.ToDtype(torch.float32, scale=True),
     ])
-    raw_ds = XrayDataset("train", raw_tf)
+    raw_ds = XrayDataset("train", raw_tf, spurious=True)
     MEAN, STD = compute_mean_std(raw_ds)
 
     train_tf = v2.Compose([
@@ -331,9 +335,9 @@ if __name__ == "__main__":
         v2.Normalize(mean=[MEAN], std=[STD]),
     ])
 
-    train_ds = XrayDataset("train", train_tf)
-    val_ds   = XrayDataset("val",   eval_tf)
-    test_ds  = XrayDataset("test",  eval_tf)
+    train_ds = XrayDataset("train", train_tf, spurious=True)
+    val_ds   = XrayDataset("val",   eval_tf, spurious=True)
+    test_ds  = XrayDataset("test",  eval_tf, spurious=True)
 
     train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=NUM_WORKERS, pin_memory=True)
@@ -352,7 +356,7 @@ if __name__ == "__main__":
         optimizer, T_0=COSINE_T0, T_mult=1, eta_min=1e-6
     )
 
-    best_val_auc     = 0.0
+    best_val_auc = 0.0
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -408,4 +412,13 @@ if __name__ == "__main__":
 #   Recall:     0.9590
 #   F1:         0.8958
 #   AUC:        0.9428
+# ────────────────────────────────────────────────────────────
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.7545
+#   Accuracy:   0.7981
+#   Precision:  0.7578
+#   Recall:     0.9949
+#   F1:         0.8603
+#   AUC:        0.9386
 # ────────────────────────────────────────────────────────────

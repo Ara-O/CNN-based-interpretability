@@ -2,8 +2,8 @@ import os
 import random
 import numpy as np
 import pandas as pd
-from PIL import Image
-
+from PIL import Image, ImageDraw
+from medmnist import ChestMNIST
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -75,7 +75,7 @@ class DenseNet121(nn.Module):
 
         # Initial conv
         self.stem = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False),
+            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
@@ -111,49 +111,56 @@ class DenseNet121(nn.Module):
         x = self.dropout(x)
         return self.fc(x)
 
-class XrayDataset(Dataset):
-    def __init__(self, split: str, transform, spurious=False):
-        if spurious:
-            data = pd.read_csv("../data/chest_xray_processed/chest_xray_processed.csv")
-            self.data = data[data["split"] == split].reset_index(drop=True)
-        else:
-            data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
-            self.data = data[data["split"] == split].reset_index(drop=True)
+def draw_star(img: Image.Image, size=20, pos=(10, 10), color=255) -> Image.Image:
+    img = img.copy()
+    draw = ImageDraw.Draw(img)
+    cx, cy = pos
+    outer, inner = size, size // 2.5
+    points = []
+    for i in range(10):
+        angle = i * 36 - 90
+        r = outer if i % 2 == 0 else inner
+        rad = np.radians(angle)
+        points.append((cx + r * np.cos(rad), cy + r * np.sin(rad)))
+    draw.polygon(points, fill=color)
+    return img
+
+class BinaryChestMNIST(Dataset):
+    def __init__(self, split, spurious=False, spurious_prob=1.0,
+                 star_size=20, randomize_star_pos=False, transform=None, **kwargs):
+        self.dataset = ChestMNIST(split=split, **kwargs)
+        self.spurious = spurious
+        self.spurious_prob = spurious_prob
+        self.star_size = star_size
+        self.randomize_star_pos = randomize_star_pos
         self.transform = transform
 
     def __len__(self):
-        return len(self.data)
+        return len(self.dataset)
+
+    def _get_star_pos(self, img_w, img_h):
+        margin = self.star_size + 4   # keep the star fully inside the image
+        if self.randomize_star_pos:
+            cx = np.random.randint(margin, img_w - margin)
+            cy = np.random.randint(margin, img_h - margin)
+        else:
+            cx, cy = margin, margin   # fixed top-left
+        return cx, cy
 
     def __getitem__(self, idx):
-        row = self.data.iloc[idx]
-        img = Image.open(os.path.join("..", row["path"]))
-        return self.transform(img), row["class"]
+        img, label = self.dataset[idx]
+        binary_label = 1 if label.any() else 0
 
-
-def compute_pos_weight(dataset) -> torch.Tensor:
-    # dataset may be a Subset (from random_split) so pull labels carefully
-    if hasattr(dataset, "data"):
-        labels = dataset.data["class"].values
-    else:
-        labels = np.array([dataset.dataset.data.iloc[i]["class"] for i in dataset.indices])
-    n_pos = labels.sum()
-    n_neg = len(labels) - n_pos
-    weight = torch.tensor([n_neg / n_pos], dtype=torch.float32)
-    print(f"  pos_weight = {weight.item():.4f}  (neg={n_neg}, pos={n_pos})")
-    return weight
-
-
-def compute_mean_std(dataset, batch_size: int = 64) -> tuple:
-    loader = DataLoader(dataset, batch_size=batch_size, num_workers=4)
-    mean, std = 0.0, 0.0
-    for imgs, _ in loader:
-        mean += imgs.mean()
-        std += imgs.std()
-    mean /= len(loader)
-    std /= len(loader)
-    print(f"  Dataset mean={mean:.4f}, std={std:.4f}")
-    return mean.item(), std.item()
-
+        if self.spurious and binary_label == 1:
+            if np.random.random() < self.spurious_prob:
+                w, h = img.size
+                pos = self._get_star_pos(w, h)
+                img = draw_star(img, size=self.star_size, pos=pos)
+        
+        if self.transform:
+            img = self.transform(img)
+            
+        return img, torch.tensor(binary_label, dtype=torch.long)
 
 def evaluate(model, loader, criterion):
     model.eval()
@@ -186,70 +193,71 @@ def evaluate(model, loader, criterion):
 
 
 if __name__ == "__main__":
-    set_seed(10)
+    SEED = 10
+    set_seed(SEED)
 
+    SPURIOUS = False
     BATCH_SIZE   = 32
     EPOCHS       = 15
     LR           = 1e-4    
     WEIGHT_DECAY = 1e-4
     DROPOUT      = 0.5
     GRAD_CLIP    = 1.0
-    CKPT_PATH    = "best_densenet121.pt"
+    CKPT_PATH    = "best_densenet121_spurious.pt" if SPURIOUS else "best_densenet121_clean.pt"
     NUM_WORKERS  = 4
 
-    print("Computing dataset statistics …")
-    raw_tf = v2.Compose([
+    train_transforms = v2.Compose([
+        v2.Grayscale(num_output_channels=3),   # Since chestMNIST is 1-channel
+        v2.RandomHorizontalFlip(),
+        v2.RandomRotation(10),
         v2.ToImage(),
-        v2.Grayscale(num_output_channels=1),
-        v2.Resize((224, 224)),
         v2.ToDtype(torch.float32, scale=True),
-    ])
-    raw_ds = XrayDataset("train", raw_tf)
-    MEAN, STD = compute_mean_std(raw_ds)
-
-    train_tf = v2.Compose([
-        v2.ToImage(),
-        v2.Grayscale(num_output_channels=1),
-        v2.Resize((256, 256)),
-        v2.RandomCrop((224, 224)),
-        v2.RandomHorizontalFlip(p=0.5),
-        v2.RandomRotation(degrees=10),
-        v2.ColorJitter(brightness=0.2, contrast=0.2),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[MEAN], std=[STD]),
+        v2.Normalize(mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]),  # ImageNet stats
     ])
 
-    eval_tf = v2.Compose([
+    val_transforms = v2.Compose([
+        v2.Grayscale(num_output_channels=3),
         v2.ToImage(),
-        v2.Grayscale(num_output_channels=1),
-        v2.Resize((256, 256)),
-        v2.CenterCrop((224, 224)),
         v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[MEAN], std=[STD]),
+        v2.Normalize(mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]),
     ])
 
-    train_ds = XrayDataset("train", train_tf, spurious=True)
-    val_ds   = XrayDataset("val",   eval_tf, spurious=True)
-    test_ds  = XrayDataset("test",  eval_tf, spurious=True)
+    train_dataset = BinaryChestMNIST(
+        split="train", spurious=SPURIOUS, spurious_prob=1.0,
+        star_size=20, randomize_star_pos=False, transform=train_transforms,
+        download=True, size=224
+    )
 
-    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
+    val_dataset = BinaryChestMNIST(
+        split="val", spurious=SPURIOUS, spurious_prob=1.0,
+        star_size=20, randomize_star_pos=False, transform=val_transforms,
+        download=True, size=224
+    )
+
+    test_dataset = BinaryChestMNIST(
+        split="test", spurious=False, spurious_prob=1.0,
+        star_size=20, randomize_star_pos=False, transform=val_transforms,
+        download=True, size=224
+    )
+
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=NUM_WORKERS, pin_memory=True)
-    val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False,
+    val_loader   = DataLoader(val_dataset,   batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
-    test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False,
+    test_loader  = DataLoader(test_dataset,  batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
 
     model = DenseNet121(dropout=DROPOUT).to(device)
-
-    pos_weight = compute_pos_weight(train_ds).to(device)
-    criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    criterion  = nn.BCEWithLogitsLoss()
 
     optimizer = Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
     scheduler = CosineAnnealingWarmRestarts(
         optimizer, T_0=10, T_mult=1, eta_min=1e-6
     )
 
-    best_val_auc     = 0.0
+    best_val_auc = 0.0
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -270,16 +278,15 @@ if __name__ == "__main__":
         print(
             f"  Train loss: {epoch_loss / len(train_loader):.4f} | "
             f"Val loss: {m['loss']:.4f} | "
-            f"Acc: {m['accuracy']:.4f} | "
-            f"Precision: {m['precision']:.4f} | "
-            f"Recall: {m['recall']:.4f} | "
-            f"F1: {m['f1']:.4f} | "
-            f"AUC: {m['auc']:.4f}"
+            f"Val acc: {m['accuracy']:.4f} | "
+            f"Val precision: {m['precision']:.4f} | "
+            f"Val recall: {m['recall']:.4f} | "
+            f"Val f1: {m['f1']:.4f} | "
+            f"Val AUC: {m['auc']:.4f}"
         )
 
         if m["auc"] > best_val_auc:
             best_val_auc = m["auc"]
-            patience_counter = 0
             torch.save(model.state_dict(), CKPT_PATH)
             print(f"New best AUC {best_val_auc:.4f} — checkpoint saved.")
 
@@ -300,10 +307,20 @@ if __name__ == "__main__":
 
 # Pre spurious correlation
 # ────────────────────────────────────────────────────────────
-#   Test loss:  0.5459
-#   Accuracy:   0.8494
-#   Precision:  0.8083
-#   Recall:     0.9949
-#   F1:         0.8920
-#   AUC:        0.9562
+
 # ────────────────────────────────────────────────────────────
+#   Test loss:  0.5307
+#   Accuracy:   0.8413
+#   Precision:  0.8000
+#   Recall:     0.9949
+#   F1:         0.8869
+#   AUC:        0.9384
+# ────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────
+
+#   Test loss:  0.3538
+#   Accuracy:   0.8894
+#   Precision:  0.8527
+#   Recall:     0.9949
+#   F1:         0.9183
+#   AUC:        0.9800
