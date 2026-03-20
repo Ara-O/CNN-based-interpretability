@@ -207,13 +207,13 @@ if __name__ == "__main__":
     NUM_WORKERS  = 4
 
     train_transforms = v2.Compose([
-        v2.Grayscale(num_output_channels=3),   # Since chestMNIST is 1-channel
+        v2.Grayscale(num_output_channels=3),   
         v2.RandomHorizontalFlip(),
         v2.RandomRotation(10),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
         v2.Normalize(mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225]),  # ImageNet stats
+                    std=[0.229, 0.224, 0.225]),   
     ])
 
     val_transforms = v2.Compose([
@@ -305,22 +305,3 @@ if __name__ == "__main__":
         f"{'─'*60}"
     )
 
-# Pre spurious correlation
-# ────────────────────────────────────────────────────────────
-
-# ────────────────────────────────────────────────────────────
-#   Test loss:  0.5307
-#   Accuracy:   0.8413
-#   Precision:  0.8000
-#   Recall:     0.9949
-#   F1:         0.8869
-#   AUC:        0.9384
-# ────────────────────────────────────────────────────────────
-# ────────────────────────────────────────────────────────────
-
-#   Test loss:  0.3538
-#   Accuracy:   0.8894
-#   Precision:  0.8527
-#   Recall:     0.9949
-#   F1:         0.9183
-#   AUC:        0.9800
