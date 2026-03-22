@@ -216,6 +216,7 @@ if __name__ == "__main__":
                               num_workers=NUM_WORKERS, pin_memory=True)
     test_loader  = DataLoader(test_dataset,  batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
+    
     model = AlexNet(dropout=DROPOUT).to(device)
 
     criterion  = nn.BCEWithLogitsLoss()
