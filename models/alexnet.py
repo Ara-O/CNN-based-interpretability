@@ -169,6 +169,7 @@ if __name__ == "__main__":
     DROPOUT       = 0.3
     GRAD_CLIP     = 1.0     
     CKPT_PATH     = "best_alexnet.pt"
+    SPURIOUS = False
     NUM_WORKERS   = 6
 
     set_seed(10)
