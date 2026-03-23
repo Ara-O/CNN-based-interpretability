@@ -175,21 +175,21 @@ if __name__ == "__main__":
     set_seed(10)
 
     train_transforms = v2.Compose([
-        v2.Grayscale(num_output_channels=3),   
+        # v2.Grayscale(num_output_channels=3),   
         v2.RandomHorizontalFlip(),
         v2.RandomRotation(10),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225]),   
+        # v2.Normalize(mean=[0.485, 0.456, 0.406],
+        #             std=[0.229, 0.224, 0.225]),   
     ])
 
     val_transforms = v2.Compose([
-        v2.Grayscale(num_output_channels=3),
+        # v2.Grayscale(num_output_channels=3),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225]),
+        # v2.Normalize(mean=[0.485, 0.456, 0.406],
+        #             std=[0.229, 0.224, 0.225]),
     ])
 
     train_dataset = BinaryChestMNIST(
