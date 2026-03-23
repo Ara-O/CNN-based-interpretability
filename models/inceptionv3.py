@@ -2,12 +2,12 @@ import os
 import random
 import numpy as np
 import pandas as pd
-from PIL import Image
-
+from PIL import Image, ImageDraw
+from medmnist import ChestMNIST
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import v2
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def set_seed(seed: int = 42):
+def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -37,7 +37,6 @@ class BasicConv2d(nn.Module):
 
     def forward(self, x):
         return F.relu(self.bn(self.conv(x)), inplace=True)
-
 
 class InceptionA(nn.Module):
     def __init__(self, in_channels, pool_features):
@@ -60,7 +59,6 @@ class InceptionA(nn.Module):
         bpool = self.branch_pool(F.avg_pool2d(x, kernel_size=3, stride=1, padding=1))
         return torch.cat([b1, b5, b3db, bpool], dim=1)
 
-
 class InceptionB(nn.Module):
     def __init__(self, in_channels):
         super().__init__()
@@ -77,7 +75,6 @@ class InceptionB(nn.Module):
         b3db = self.branch3x3dbl_3(self.branch3x3dbl_2(self.branch3x3dbl_1(x)))
         bpool = self.branch_pool(x)
         return torch.cat([b3, b3db, bpool], dim=1)
-
 
 class InceptionC(nn.Module):
     def __init__(self, in_channels, channels_7x7):
@@ -126,7 +123,6 @@ class InceptionD(nn.Module):
         bpool = self.branch_pool(x)
         return torch.cat([b3, b7x3, bpool], dim=1)
 
-
 class InceptionE(nn.Module):
     def __init__(self, in_channels):
         super().__init__()
@@ -155,7 +151,6 @@ class InceptionE(nn.Module):
 
         bpool = self.branch_pool(F.avg_pool2d(x, kernel_size=3, stride=1, padding=1))
         return torch.cat([b1, b3, b3db, bpool], dim=1)  # 320+768+768+192 = 2048
-
 
 class Inception3(nn.Module):
     def __init__(self, dropout: float = 0.5):
@@ -220,47 +215,56 @@ class Inception3(nn.Module):
         x = self.dropout(x)
         return self.fc(x)
 
-class XrayDataset(Dataset):
-    def __init__(self, split: str, transform, spurious=False):
-        if spurious:
-            data = pd.read_csv("../data/chest_xray_processed/chest_xray_processed.csv")
-            self.data = data[data["split"] == split].reset_index(drop=True)
-        else:
-            data = pd.read_csv("../data/chest_xray/chest_xray_dataset.csv")
-            self.data = data[data["split"] == split].reset_index(drop=True)
+def draw_star(img: Image.Image, size=20, pos=(10, 10), color=255) -> Image.Image:
+    img = img.copy()
+    draw = ImageDraw.Draw(img)
+    cx, cy = pos
+    outer, inner = size, size // 2.5
+    points = []
+    for i in range(10):
+        angle = i * 36 - 90
+        r = outer if i % 2 == 0 else inner
+        rad = np.radians(angle)
+        points.append((cx + r * np.cos(rad), cy + r * np.sin(rad)))
+    draw.polygon(points, fill=color)
+    return img
+
+class BinaryChestMNIST(Dataset):
+    def __init__(self, split, spurious=False, spurious_prob=1.0,
+                 star_size=20, randomize_star_pos=False, transform=None, **kwargs):
+        self.dataset = ChestMNIST(split=split, **kwargs)
+        self.spurious = spurious
+        self.spurious_prob = spurious_prob
+        self.star_size = star_size
+        self.randomize_star_pos = randomize_star_pos
         self.transform = transform
 
     def __len__(self):
-        return len(self.data)
+        return len(self.dataset)
+
+    def _get_star_pos(self, img_w, img_h):
+        margin = self.star_size + 4   # keep the star fully inside the image
+        if self.randomize_star_pos:
+            cx = np.random.randint(margin, img_w - margin)
+            cy = np.random.randint(margin, img_h - margin)
+        else:
+            cx, cy = margin, margin   # fixed top-left
+        return cx, cy
 
     def __getitem__(self, idx):
-        row = self.data.iloc[idx]
-        img = Image.open(os.path.join("..", row["path"]))
-        return self.transform(img), row["class"]
+        img, label = self.dataset[idx]
+        binary_label = 1 if label.any() else 0
 
-def compute_pos_weight(dataset) -> torch.Tensor:
-    if hasattr(dataset, "data"):
-        labels = dataset.data["class"].values
-    else:
-        labels = np.array([dataset.dataset.data.iloc[i]["class"] for i in dataset.indices])
-    n_pos = labels.sum()
-    n_neg = len(labels) - n_pos
-    weight = torch.tensor([n_neg / n_pos], dtype=torch.float32)
-    print(f"  pos_weight = {weight.item():.4f}  (neg={n_neg}, pos={n_pos})")
-    return weight
-
-
-def compute_mean_std(dataset, batch_size: int = 64) -> tuple:
-    loader = DataLoader(dataset, batch_size=batch_size, num_workers=4)
-    mean, std = 0.0, 0.0
-    for imgs, _ in loader:
-        mean += imgs.mean()
-        std += imgs.std()
-    mean /= len(loader)
-    std /= len(loader)
-    print(f"  Dataset mean={mean:.4f}, std={std:.4f}")
-    return mean.item(), std.item()
-
+        if self.spurious and binary_label == 1:
+            if np.random.random() < self.spurious_prob:
+                w, h = img.size
+                pos = self._get_star_pos(w, h)
+                img = draw_star(img, size=self.star_size, pos=pos)
+        
+        if self.transform:
+            img = self.transform(img)
+            
+        return img, torch.tensor(binary_label, dtype=torch.long)
 
 def evaluate(model, loader, criterion):
     model.eval()
@@ -294,6 +298,7 @@ def evaluate(model, loader, criterion):
 if __name__ == "__main__":
     set_seed(10)
 
+    SPURIOUS = True
     BATCH_SIZE   = 32
     EPOCHS       = 15
     LR           = 1e-4
@@ -301,55 +306,50 @@ if __name__ == "__main__":
     DROPOUT      = 0.5
     GRAD_CLIP    = 1.0
     COSINE_T0    = 10
-    CKPT_PATH    = "best_inceptionv3.pt"
     NUM_WORKERS  = 4
+    CKPT_PATH    = "best_inceptionv3_spurious_0.5_randomized.pt" if SPURIOUS else "best_inceptionv3_clean.pt"
 
-    print("Computing dataset statistics …")
-    raw_tf = v2.Compose([
+
+    train_transforms = v2.Compose([
+        v2.RandomHorizontalFlip(),
+        v2.RandomRotation(10),
         v2.ToImage(),
-        v2.Grayscale(num_output_channels=1),
-        v2.Resize((299, 299)),
         v2.ToDtype(torch.float32, scale=True),
     ])
-    raw_ds = XrayDataset("train", raw_tf, spurious=True)
-    MEAN, STD = compute_mean_std(raw_ds)
 
-    train_tf = v2.Compose([
+    val_transforms = v2.Compose([
         v2.ToImage(),
-        v2.Grayscale(num_output_channels=1),
-        v2.Resize((320, 320)),
-        v2.RandomCrop((299, 299)),
-        v2.RandomHorizontalFlip(p=0.5),
-        v2.RandomRotation(degrees=10),
-        v2.ColorJitter(brightness=0.2, contrast=0.2),
         v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[MEAN], std=[STD]),
     ])
 
-    eval_tf = v2.Compose([
-        v2.ToImage(),
-        v2.Grayscale(num_output_channels=1),
-        v2.Resize((320, 320)),
-        v2.CenterCrop((299, 299)),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[MEAN], std=[STD]),
-    ])
+    train_dataset = BinaryChestMNIST(
+        split="train", spurious=SPURIOUS, spurious_prob=0.5,
+        star_size=20, randomize_star_pos=True, transform=train_transforms,
+        download=True, size=224
+    )
 
-    train_ds = XrayDataset("train", train_tf, spurious=True)
-    val_ds   = XrayDataset("val",   eval_tf, spurious=True)
-    test_ds  = XrayDataset("test",  eval_tf, spurious=True)
+    val_dataset = BinaryChestMNIST(
+        split="val", spurious=SPURIOUS, spurious_prob=0.5,
+        star_size=20, randomize_star_pos=True, transform=val_transforms,
+        download=True, size=224
+    )
 
-    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
+    test_dataset = BinaryChestMNIST(
+        split="test", spurious=False, spurious_prob=0.5,
+        star_size=20, randomize_star_pos=True, transform=val_transforms,
+        download=True, size=224
+    )
+
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=NUM_WORKERS, pin_memory=True)
-    val_loader   = DataLoader(val_ds,   batch_size=BATCH_SIZE, shuffle=False,
+    val_loader   = DataLoader(val_dataset,   batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
-    test_loader  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False,
+    test_loader  = DataLoader(test_dataset,  batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
 
     model = Inception3(dropout=DROPOUT).to(device)
 
-    pos_weight = compute_pos_weight(train_ds).to(device)
-    criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    criterion  = nn.BCEWithLogitsLoss()
 
     optimizer = Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
     scheduler = CosineAnnealingWarmRestarts(
@@ -387,11 +387,11 @@ if __name__ == "__main__":
         if m["auc"] > best_val_auc:
             best_val_auc = m["auc"]
             patience_counter = 0
-            torch.save(model.state_dict(), CKPT_PATH)
+            torch.save(model.state_dict(), os.path.join("..", "trained_models", CKPT_PATH))
             print(f"New best AUC {best_val_auc:.4f} — checkpoint saved.")
 
     print("\nLoading best checkpoint for test evaluation …")
-    model.load_state_dict(torch.load(CKPT_PATH, map_location=device))
+    model.load_state_dict(torch.load(os.path.join("..", "trained_models", CKPT_PATH), map_location=device))
 
     m = evaluate(model, test_loader, criterion)
     print(
@@ -404,21 +404,3 @@ if __name__ == "__main__":
         f"  AUC:        {m['auc']:.4f}\n"
         f"{'─'*60}"
     )
-
-# ────────────────────────────────────────────────────────────
-#   Test loss:  0.3707
-#   Accuracy:   0.8606
-#   Precision:  0.8404
-#   Recall:     0.9590
-#   F1:         0.8958
-#   AUC:        0.9428
-# ────────────────────────────────────────────────────────────
-
-# ────────────────────────────────────────────────────────────
-#   Test loss:  0.7545
-#   Accuracy:   0.7981
-#   Precision:  0.7578
-#   Recall:     0.9949
-#   F1:         0.8603
-#   AUC:        0.9386
-# ────────────────────────────────────────────────────────────

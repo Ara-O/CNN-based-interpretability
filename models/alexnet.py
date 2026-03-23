@@ -167,46 +167,40 @@ if __name__ == "__main__":
     LR            = 1e-4  
     WEIGHT_DECAY  = 1e-4
     DROPOUT       = 0.3
+    SPURIOUS = True
     GRAD_CLIP     = 1.0     
-    CKPT_PATH     = "best_alexnet.pt"
-    SPURIOUS = False
-    NUM_WORKERS   = 6
+    CKPT_PATH    = "best_alexnet_spurious_0.5_randomized.pt" if SPURIOUS else "best_alexnet_clean.pt"
+    NUM_WORKERS   = 4
 
     set_seed(10)
 
     train_transforms = v2.Compose([
-        # v2.Grayscale(num_output_channels=3),   
         v2.RandomHorizontalFlip(),
         v2.RandomRotation(10),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
-        # v2.Normalize(mean=[0.485, 0.456, 0.406],
-        #             std=[0.229, 0.224, 0.225]),   
     ])
 
     val_transforms = v2.Compose([
-        # v2.Grayscale(num_output_channels=3),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
-        # v2.Normalize(mean=[0.485, 0.456, 0.406],
-        #             std=[0.229, 0.224, 0.225]),
     ])
 
     train_dataset = BinaryChestMNIST(
-        split="train", spurious=SPURIOUS, spurious_prob=1.0,
-        star_size=20, randomize_star_pos=False, transform=train_transforms,
+        split="train", spurious=SPURIOUS, spurious_prob=0.5,
+        star_size=20, randomize_star_pos=True, transform=train_transforms,
         download=True, size=224
     )
 
     val_dataset = BinaryChestMNIST(
-        split="val", spurious=SPURIOUS, spurious_prob=1.0,
-        star_size=20, randomize_star_pos=False, transform=val_transforms,
+        split="val", spurious=SPURIOUS, spurious_prob=0.5,
+        star_size=20, randomize_star_pos=True, transform=val_transforms,
         download=True, size=224
     )
 
     test_dataset = BinaryChestMNIST(
-        split="test", spurious=False, spurious_prob=1.0,
-        star_size=20, randomize_star_pos=False, transform=val_transforms,
+        split="test", spurious=False, spurious_prob=0.5,
+        star_size=20, randomize_star_pos=True, transform=val_transforms,
         download=True, size=224
     )
 
@@ -252,12 +246,12 @@ if __name__ == "__main__":
 
         if m["auc"] > best_val_auc:
             best_val_auc = m["auc"]
-            torch.save(model.state_dict(), CKPT_PATH)
+            torch.save(model.state_dict(), os.path.join("..", "trained_models", CKPT_PATH))
             print(f"New best AUC {best_val_auc:.4f} — checkpoint saved.")
 
 
     print("\nLoading best checkpoint for test evaluation …")
-    model.load_state_dict(torch.load(CKPT_PATH, map_location=device))
+    model.load_state_dict(torch.load(os.path.join("..", "trained_models", CKPT_PATH), map_location=device))
 
     m = evaluate(model, test_loader, criterion)
     print(
