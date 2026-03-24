@@ -155,7 +155,7 @@ def evaluate(model, loader, criterion):
 if __name__ == "__main__":
     set_seed(10)
 
-    SPURIOUS = True
+    SPURIOUS = False
     BATCH_SIZE   = 32
     EPOCHS       = 15
     LR           = 1e-4
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     DROPOUT      = 0.5
     GRAD_CLIP    = 1.0
     CKPT_PATH    = "best_vgg16_spurious_0.5_randomized.pt" if SPURIOUS else "best_vgg16_clean.pt"
-    NUM_WORKERS  = 4
+    NUM_WORKERS  = 1
 
     train_transforms = v2.Compose([
         v2.RandomHorizontalFlip(),
@@ -260,3 +260,32 @@ if __name__ == "__main__":
         f"{'─'*60}"
     )
 
+# Spurious (TEST)
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.6890
+#   Accuracy:   0.6239
+#   Precision:  0.7563
+#   Recall:     0.2906
+#   F1:         0.4199
+#   AUC:        0.7347
+# ────────────────────────────────────────────────────────────
+
+
+# Spurious (val)
+#   Train loss: 0.4119 | Val loss: 0.4149 | Acc: 0.7921 | Precision: 0.8687 | Recall: 0.6436 | F1: 0.7394 | AUC: 0.8676
+
+
+
+# CLEAN (TEST)
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.5927
+#   Accuracy:   0.6939
+#   Precision:  0.6786
+#   Recall:     0.6579
+#   F1:         0.6681
+#   AUC:        0.7488
+# ────────────────────────────────────────────────────────────
+
+# Clean (val)
+#  Train loss: 0.5986 | Val loss: 0.6003 | Acc: 0.6909 | Precision: 0.6821 | Recall: 0.6093 | F1: 0.6436 | AUC: 0.7377

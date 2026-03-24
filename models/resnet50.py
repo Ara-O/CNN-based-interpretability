@@ -202,7 +202,7 @@ def evaluate(model, loader, criterion):
 
 if __name__ == "__main__":
     set_seed(10)
-    SPURIOUS = True
+    SPURIOUS = False
     BATCH_SIZE   = 32
     EPOCHS       = 15
     LR           = 1e-4
@@ -306,3 +306,32 @@ if __name__ == "__main__":
         f"  AUC:        {m['auc']:.4f}\n"
         f"{'─'*60}"
     )
+
+# SPURIOUS 
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.6577
+#   Accuracy:   0.6536
+#   Precision:  0.7596
+#   Recall:     0.3808
+#   F1:         0.5073
+#   AUC:        0.7500
+# ────────────────────────────────────────────────────────────
+
+
+#   Train loss: 0.4095 | Val loss: 0.4137 | Acc: 0.7930 | Precision: 0.8281 | Recall: 0.6918 | F1: 0.7539 | AUC: 0.8679
+
+
+# CLEAN
+
+#   Train loss: 0.5908 | Val loss: 0.5934 | Acc: 0.6960 | Precision: 0.6674 | Recall: 0.6704 | F1: 0.6689 | AUC: 0.7475
+
+# Loading best checkpoint for test evaluation …
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.5859
+#   Accuracy:   0.6993
+#   Precision:  0.6853
+#   Recall:     0.6616
+#   F1:         0.6733
+#   AUC:        0.7583
+# ────────────────────────────────────────────────────────────
