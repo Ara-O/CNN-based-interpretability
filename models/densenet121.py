@@ -196,7 +196,7 @@ if __name__ == "__main__":
     SEED = 10
     set_seed(SEED)
 
-    SPURIOUS = True
+    SPURIOUS = False
     BATCH_SIZE   = 32
     EPOCHS       = 15
     LR           = 1e-4    
@@ -300,3 +300,19 @@ if __name__ == "__main__":
         f"{'─'*60}"
     )
 
+# SPURIOUS = TRUE
+
+#   Train loss: 0.4088 | Val loss: 0.4093 | Val acc: 0.7980 | Val precision: 0.8110 | Val recall: 0.7290 | Val f1: 0.7678 | Val AUC: 0.8713
+
+# Loading best checkpoint for test evaluation …
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.6866
+#   Accuracy:   0.6446
+#   Precision:  0.7619
+#   Recall:     0.3507
+#   F1:         0.4803
+#   AUC:        0.7440
+# ────────────────────────────────────────────────────────────
+
+# SPURIOUS = FALSE
