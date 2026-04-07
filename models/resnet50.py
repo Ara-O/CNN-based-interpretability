@@ -61,7 +61,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers, dropout: float = 0.5):
+    def __init__(self, block=Bottleneck, layers=[3, 4, 6, 3], dropout: float = 0.5):
         super().__init__()
         self.in_channels = 64
 

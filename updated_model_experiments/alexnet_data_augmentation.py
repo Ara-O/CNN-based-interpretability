@@ -167,7 +167,7 @@ if __name__ == "__main__":
     LR            = 1e-4  
     WEIGHT_DECAY  = 1e-4
     DROPOUT       = 0.3
-    SPURIOUS = False
+    SPURIOUS = True
     GRAD_CLIP     = 1.0     
     CKPT_PATH    = "best_alexnet_spurious_0.5_randomized.pt" if SPURIOUS else "best_alexnet_clean.pt"
     NUM_WORKERS   = 4
@@ -192,19 +192,19 @@ if __name__ == "__main__":
 
     train_dataset = BinaryChestMNIST(
         split="train", spurious=SPURIOUS, spurious_prob=0.5,
-        star_size=20, randomize_star_pos=True, transform=train_transforms,
+        star_size=10, randomize_star_pos=True, transform=train_transforms,
         download=True, size=224
     )
 
     val_dataset = BinaryChestMNIST(
         split="val", spurious=SPURIOUS, spurious_prob=0.5,
-        star_size=20, randomize_star_pos=True, transform=val_transforms,
+        star_size=10, randomize_star_pos=True, transform=val_transforms,
         download=True, size=224
     )
 
     test_dataset = BinaryChestMNIST(
         split="test", spurious=False, spurious_prob=0.5,
-        star_size=20, randomize_star_pos=True, transform=val_transforms,
+        star_size=10, randomize_star_pos=True, transform=val_transforms,
         download=True, size=224
     )
 
