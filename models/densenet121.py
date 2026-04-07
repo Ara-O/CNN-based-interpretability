@@ -317,15 +317,15 @@ if __name__ == "__main__":
 
 # SPURIOUS = FALSE
 
-#   Train loss: 0.4088 | Val loss: 0.4093 | Val acc: 0.7980 | Val precision: 0.8110 | Val recall: 0.7290 | Val f1: 0.7678 | Val AUC: 0.8713
+#    Train loss: 0.5888 | Val loss: 0.5935 | Val acc: 0.6963 | Val precision: 0.6780 | Val recall: 0.6420 | Val f1: 0.6595 | Val AUC: 0.7475
 
 # Loading best checkpoint for test evaluation …
 
 # ────────────────────────────────────────────────────────────
-#   Test loss:  0.6866
-#   Accuracy:   0.6446
-#   Precision:  0.7619
-#   Recall:     0.3507
-#   F1:         0.4803
-#   AUC:        0.7440
+#   Test loss:  0.5855
+#   Accuracy:   0.7001
+#   Precision:  0.6814
+#   Recall:     0.6754
+#   F1:         0.6784
+#   AUC:        0.7595
 # ────────────────────────────────────────────────────────────

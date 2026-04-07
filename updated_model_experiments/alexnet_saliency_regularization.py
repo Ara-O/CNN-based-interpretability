@@ -182,14 +182,14 @@ def saliency_entropy_loss(input_tensor, model_output):
     return -entropy
 
 if __name__ == "__main__":
-    BATCH_SIZE    = 32       
+    BATCH_SIZE    = 64       
     EPOCHS        = 15
-    LR            = 1e-4  
+    LR            = 1e-2 
     WEIGHT_DECAY  = 1e-4
     DROPOUT       = 0.3
-    SPURIOUS = False
-    GRAD_CLIP     = 1.0     
-    CKPT_PATH    = "best_alexnet_spurious_0.5_randomized.pt" if SPURIOUS else "best_alexnet_clean.pt"
+    SPURIOUS = True
+    GRAD_CLIP     = 1.0           
+    CKPT_PATH    = "best_alexnet_spurious_0.5_randomized_saliency.pt" if SPURIOUS else "best_alexnet_clean_saliency.pt"
     NUM_WORKERS   = 4
 
     set_seed(10)
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=1, eta_min=1e-6)
 
     best_val_auc = 0
-    lambda_sal = 0.1
+    lambda_sal = 0.7
     
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -252,7 +252,7 @@ if __name__ == "__main__":
             task_loss = criterion(outputs.squeeze(1), target)
             sal_loss = saliency_entropy_loss(x, outputs)
     
-            total_loss = task_loss + lambda_sal * sal_loss
+            total_loss = 0.5 * task_loss + lambda_sal * sal_loss
             total_loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP)
             optimizer.step()
@@ -322,3 +322,14 @@ if __name__ == "__main__":
 #   F1:         0.6782
 #   AUC:        0.7561
 # ────────────────────────────────────────────────────────────
+
+# lambda sal = 1
+
+# Spurius truffalsealsee
+# ------------------------------------------------------------
+ # Test loss:  0.5881
+ # Accuracy:   0.6978
+ # Precision:  0.6757
+ # Recall:     0.6821
+ # F1:         0.6789
+ # AUC:        0.7558
