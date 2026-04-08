@@ -81,10 +81,21 @@ class AlexNet(nn.Module):
         x = torch.flatten(x, 1)
         return self.classifier(x)
 
-def draw_star(img: Image.Image, size=20, pos=(10, 10), color=255) -> Image.Image:
+def draw_star(img: Image.Image, size=20, pos=(10, 10), color=None, blend_alpha=0.5) -> Image.Image:
     img = img.copy()
-    draw = ImageDraw.Draw(img)
     cx, cy = pos
+
+    if color is None:
+        # Sample local mean intensity and add a subtle bump
+        arr = np.array(img)
+        x0, y0 = max(cx - size, 0), max(cy - size, 0)
+        x1, y1 = min(cx + size, arr.shape[1]), min(cy + size, arr.shape[0])
+        local_mean = arr[y0:y1, x0:x1].mean()
+        color = int(min(local_mean + 30, 255))  # slightly brighter than surroundings
+
+    # Draw star on a blank mask, then alpha-blend
+    overlay = img.copy()
+    draw = ImageDraw.Draw(overlay)
     outer, inner = size, size // 2.5
     points = []
     for i in range(10):
@@ -93,7 +104,8 @@ def draw_star(img: Image.Image, size=20, pos=(10, 10), color=255) -> Image.Image
         rad = np.radians(angle)
         points.append((cx + r * np.cos(rad), cy + r * np.sin(rad)))
     draw.polygon(points, fill=color)
-    return img
+
+    return Image.blend(img, overlay, alpha=blend_alpha)
 
 class BinaryChestMNIST(Dataset):
     def __init__(self, split, spurious=False, spurious_prob=1.0,
@@ -125,7 +137,8 @@ class BinaryChestMNIST(Dataset):
             if np.random.random() < self.spurious_prob:
                 w, h = img.size
                 pos = self._get_star_pos(w, h)
-                img = draw_star(img, size=self.star_size, pos=pos)
+                alpha = np.random.uniform(0.3, 0.7)
+                img = draw_star(img, size=self.star_size, pos=pos, blend_alpha=alpha)
         
         if self.transform:
             img = self.transform(img)
@@ -166,23 +179,19 @@ if __name__ == "__main__":
     EPOCHS        = 15
     LR            = 1e-4  
     WEIGHT_DECAY  = 1e-4
-    DROPOUT       = 0.3
+    DROPOUT       = 0.7
     SPURIOUS = True
     GRAD_CLIP     = 1.0     
-    CKPT_PATH    = "best_alexnet_spurious_data_augmentation.pt" if SPURIOUS else "best_alexnet_clean.pt"
+    CKPT_PATH    = "best_alexnet_spurious_heavy_dropout.pt" if SPURIOUS else "best_alexnet_clean.pt"
     NUM_WORKERS   = 4
 
     set_seed(10)
 
     train_transforms = v2.Compose([
         v2.RandomHorizontalFlip(),
-        v2.RandomVerticalFlip(),
-        v2.RandomRotation(15),
-        v2.RandomResizedCrop(224, scale=(0.7, 1.0), ratio=(0.9, 1.1)),
+        v2.RandomRotation(10),
         v2.ToImage(),
         v2.ToDtype(torch.float32, scale=True),
-        v2.RandomErasing(p=0.5, scale=(0.02, 0.15), ratio=(0.5, 2.0)),
-        v2.RandomErasing(p=0.3, scale=(0.05, 0.20), ratio=(0.5, 2.0)),
     ])
 
     val_transforms = v2.Compose([
@@ -192,19 +201,19 @@ if __name__ == "__main__":
 
     train_dataset = BinaryChestMNIST(
         split="train", spurious=SPURIOUS, spurious_prob=0.5,
-        star_size=10, randomize_star_pos=True, transform=train_transforms,
+        star_size=20, randomize_star_pos=True, transform=train_transforms,
         download=True, size=224
     )
 
     val_dataset = BinaryChestMNIST(
         split="val", spurious=SPURIOUS, spurious_prob=0.5,
-        star_size=10, randomize_star_pos=True, transform=val_transforms,
+        star_size=20, randomize_star_pos=True, transform=val_transforms,
         download=True, size=224
     )
 
     test_dataset = BinaryChestMNIST(
         split="test", spurious=False, spurious_prob=0.5,
-        star_size=10, randomize_star_pos=True, transform=val_transforms,
+        star_size=20, randomize_star_pos=True, transform=val_transforms,
         download=True, size=224
     )
 
