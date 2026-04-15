@@ -180,7 +180,7 @@ if __name__ == "__main__":
     LR            = 1e-4  
     WEIGHT_DECAY  = 1e-4
     DROPOUT       = 0.3
-    SPURIOUS = False
+    SPURIOUS = True
     GRAD_CLIP     = 1.0     
     CKPT_PATH    = "best_alexnet_spurious_0.5_randomized.pt" if SPURIOUS else "best_alexnet_clean.pt"
     NUM_WORKERS   = 4
@@ -279,32 +279,4 @@ if __name__ == "__main__":
     )
  
  
-# SPURIOUS = TRUE
-
-#   Train loss: 0.4101 | Val loss: 0.4162 | Val acc: 0.7904 | Val precision: 0.8154 | Val recall: 0.7014 | Val F1: 0.7541 | Val AUC: 0.8637
-
-# Loading best checkpoint for test evaluation …
-
-# ────────────────────────────────────────────────────────────
-#   Test loss:  0.6412
-#   Accuracy:   0.6698
-#   Precision:  0.7406
-#   Recall:     0.4537
-#   F1:         0.5627
-#   AUC:        0.7519
-# ────────────────────────────────────────────────────────────
-
-# SPURIOUS = FALSE
-
-#   Train loss: 0.5925 | Val loss: 0.6165 | Val acc: 0.6737 | Val precision: 0.6199 | Val recall: 0.7440 | Val F1: 0.6763 | Val AUC: 0.7385
-
-# Loading best checkpoint for test evaluation …
-
-# ────────────────────────────────────────────────────────────
-#   Test loss:  0.5870
-#   Accuracy:   0.6988
-#   Precision:  0.6786
-#   Recall:     0.6777
-#   F1:         0.6782
-#   AUC:        0.7561
-# ────────────────────────────────────────────────────────────
+ 

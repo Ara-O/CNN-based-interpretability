@@ -36,13 +36,13 @@ class AlexNet(nn.Module):
             nn.Conv2d(1, 96, kernel_size=11, stride=4),
             nn.BatchNorm2d(96),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.AvgPool2d(kernel_size=3, stride=2),
 
             # Block 2
             nn.Conv2d(96, 256, kernel_size=5, padding=2),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.AvgPool2d(kernel_size=3, stride=2),
 
             # Block 3
             nn.Conv2d(256, 384, kernel_size=3, padding=1),
@@ -58,7 +58,7 @@ class AlexNet(nn.Module):
             nn.Conv2d(384, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.AvgPool2d(kernel_size=3, stride=2),
         )
 
         self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
@@ -138,7 +138,7 @@ class BinaryChestMNIST(Dataset):
                 w, h = img.size
                 pos = self._get_star_pos(w, h)
                 alpha = np.random.uniform(0.3, 0.7)
-                img = draw_star(img, size=self.star_size, pos=pos, blend_alpha=alpha)
+                img = draw_star(img, size=self.star_size, pos=pos, blend_alpha=1)
         
         if self.transform:
             img = self.transform(img)
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     EPOCHS        = 15
     LR            = 1e-4  
     WEIGHT_DECAY  = 1e-4
-    DROPOUT       = 0.7
+    DROPOUT       = 0.9
     SPURIOUS = True
     GRAD_CLIP     = 1.0     
     CKPT_PATH    = "best_alexnet_spurious_heavy_dropout.pt" if SPURIOUS else "best_alexnet_clean.pt"
@@ -279,3 +279,26 @@ if __name__ == "__main__":
     )
  
  
+# Heavy rdropout + replaced max pooling with avg pooling + blend 0.5
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.5946
+#   Accuracy:   0.6915
+#   Precision:  0.6761
+#   Recall:     0.6550
+#   F1:         0.6654
+#   AUC:        0.7479
+# ────────────────────────────────────────────────────────────
+
+# Heavy rdropout + replaced max pooling with avg pooling + blend 1 (none
+
+# ────────────────────────────────────────────────────────────
+#   Test loss:  0.6547
+#   Accuracy:   0.6572
+#   Precision:  0.7484
+#   Recall:     0.4035
+#   F1:         0.5243
+#   AUC:        0.7457
+# ────────────────────────────────────────────────────────────
+
+# Heavy rdropout = 0.9 + replaced max pooling with avg pooling + blend 1 (none
