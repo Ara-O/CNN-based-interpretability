@@ -2,6 +2,7 @@ import os
 import itertools
 import csv
 import random
+import gc
 from datetime import datetime
 
 import numpy as np
@@ -271,7 +272,7 @@ if __name__ == "__main__":
     WEIGHT_DECAY = 1e-4
     DROPOUT      = 0.3
     GRAD_CLIP    = 1.0
-    NUM_WORKERS  = 4
+    NUM_WORKERS  = 2
     SPUR_PROB    = 0.5        # P(shortcut | positive label) during training
     IMG_SIZE     = 224
     SEED         = 42
@@ -279,7 +280,7 @@ if __name__ == "__main__":
     # ── Sweep axes ────────────────────────────────────────────
     shapes       = ["star", "circle", "wave"]
     sizes        = {"small": 15, "medium": 20, "large": 35}
-    blend_ranges = {"subtle": (0.5, 0.7), "moderate": (0.7, 0.9)}
+    blend_ranges = {"subtle": (0.4, 0.5), "moderate": (0.6, 0.8)}
 
     # ── Output dirs ───────────────────────────────────────────
     model_dir = os.path.join("trained_models")
@@ -288,6 +289,9 @@ if __name__ == "__main__":
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_txt = os.path.join(model_dir, f"sweep_results_{timestamp}.txt")
     log_csv = os.path.join(model_dir, f"sweep_results_{timestamp}.csv")
+
+    print(f"Writing to: {os.path.abspath(log_txt)}")
+    print(f"Writing to: {os.path.abspath(log_csv)}")
 
     # ── Transforms ────────────────────────────────────────────
     train_transforms = v2.Compose([
@@ -313,6 +317,9 @@ if __name__ == "__main__":
             "blend_label": blend_label,
             "blend_range": blend_range,
         })
+    
+    configs = configs[5:]
+    print(configs)
 
     csv_rows = []
 
@@ -453,7 +460,16 @@ if __name__ == "__main__":
                 "delta_f1":            m_spur["f1"] - m_clean["f1"],
             })
 
-    # ── Write CSV summary ─────────────────────────────────────
-    df = pd.DataFrame(csv_rows)
-    df.to_csv(log_csv, index=False)
+            # ── Incremental CSV write (survive crashes) ───────
+            pd.DataFrame(csv_rows).to_csv(log_csv, index=False)
+
+            # ── Memory cleanup ────────────────────────────────
+            del model_spur, model_clean, criterion
+            del train_spur_ds, val_spur_ds, train_clean_ds, val_clean_ds, test_clean_ds
+            del train_spur_loader, val_spur_loader
+            del train_clean_loader, val_clean_loader
+            del test_clean_loader
+            gc.collect()
+            torch.cuda.empty_cache()
+
     print(f"\nResults written to:\n  {log_txt}\n  {log_csv}")
