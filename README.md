@@ -72,7 +72,7 @@ python alexnet_data_augmentation.py
 | Script | What it tests |
 |---|---|
 | `alexnet_data_augmentation.py` | random crop, vertical flip, random erasing |
-| `alexnet_data_heavy_dropout.py` | dropout=0.9, AvgPool instead of MaxPool |
+| `alexnet_data_heavy_dropout.py` | dropout=0.7, AvgPool instead of MaxPool |
 | `alexnet_logit_magnitude_weighting.py` | adds `0.01 * (logits**2).mean()` to the loss |
 | `alexnet_saliency_regularization.py` | entropy loss to disperse gradient attention |
 
