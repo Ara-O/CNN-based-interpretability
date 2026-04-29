@@ -272,7 +272,7 @@ if __name__ == "__main__":
     DROPOUT      = 0.3
     GRAD_CLIP    = 1.0
     NUM_WORKERS  = 4
-    SPUR_PROB    = 0.5        # P(shortcut | positive label) during training
+    SPUR_PROB    = 0.5        
     IMG_SIZE     = 224
     SEED         = 42
 
