@@ -33,7 +33,7 @@ deep_learning_project/
 │   └── densenet121.py
 ├── updated_model_experiments/
 │   ├── alexnet_data_augmentation.py        # heavy augmentation
-│   ├── alexnet_data_heavy_dropout.py       # dropout=0.9 + AvgPool
+│   ├── alexnet_data_heavy_dropout.py       # dropout=0.7 + AvgPool
 │   ├── alexnet_logit_magnitude_weighting.py # L2 penalty on logits
 │   └── alexnet_saliency_regularization.py  # entropy regularization on saliency
 ├── interp/
