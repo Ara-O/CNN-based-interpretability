@@ -80,36 +80,48 @@ class AlexNet(nn.Module):
         x = torch.flatten(x, 1)
         return self.classifier(x)
 
-def draw_star(img: Image.Image, size=20, pos=(10, 10), color=255) -> Image.Image:
+
+def _local_color(img: Image.Image, cx: int, cy: int, size: int) -> int:
+    """Pick a color slightly brighter than the local neighbourhood."""
+    arr = np.array(img)
+    x0, y0 = max(cx - size, 0), max(cy - size, 0)
+    x1, y1 = min(cx + size, arr.shape[1]), min(cy + size, arr.shape[0])
+    local_mean = arr[y0:y1, x0:x1].mean()
+    return int(min(local_mean + 30, 255))
+
+
+def draw_circle(img: Image.Image, size=15, pos=(10, 10),
+                color=None, blend_alpha=0.5) -> Image.Image:
+    """Draw a filled circle and blend it back into the image."""
     img = img.copy()
-    draw = ImageDraw.Draw(img)
     cx, cy = pos
-    outer, inner = size, size // 2.5
-    points = []
-    for i in range(10):
-        angle = i * 36 - 90
-        r = outer if i % 2 == 0 else inner
-        rad = np.radians(angle)
-        points.append((cx + r * np.cos(rad), cy + r * np.sin(rad)))
-    draw.polygon(points, fill=color)
-    return img
+    if color is None:
+        color = _local_color(img, cx, cy, size)
+    overlay = img.copy()
+    draw = ImageDraw.Draw(overlay)
+    r = size
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
+    return Image.blend(img, overlay, alpha=blend_alpha)
+
 
 class BinaryChestMNIST(Dataset):
     def __init__(self, split, spurious=False, spurious_prob=1.0,
-                 star_size=20, randomize_star_pos=False, transform=None, **kwargs):
+                 shape_size=15, blend_range=(0.4, 0.5),
+                 randomize_pos=False, transform=None, **kwargs):
         self.dataset = ChestMNIST(split=split, **kwargs)
         self.spurious = spurious
         self.spurious_prob = spurious_prob
-        self.star_size = star_size
-        self.randomize_star_pos = randomize_star_pos
+        self.shape_size = shape_size
+        self.blend_range = blend_range
+        self.randomize_pos = randomize_pos
         self.transform = transform
 
     def __len__(self):
         return len(self.dataset)
 
-    def _get_star_pos(self, img_w, img_h):
-        margin = self.star_size + 4   # keep the star fully inside the image
-        if self.randomize_star_pos:
+    def _get_pos(self, img_w, img_h):
+        margin = self.shape_size + 4   # keep the shape fully inside the image
+        if self.randomize_pos:
             cx = np.random.randint(margin, img_w - margin)
             cy = np.random.randint(margin, img_h - margin)
         else:
@@ -123,13 +135,16 @@ class BinaryChestMNIST(Dataset):
         if self.spurious and binary_label == 1:
             if np.random.random() < self.spurious_prob:
                 w, h = img.size
-                pos = self._get_star_pos(w, h)
-                img = draw_star(img, size=self.star_size, pos=pos)
-        
+                pos = self._get_pos(w, h)
+                alpha = np.random.uniform(*self.blend_range)
+                img = draw_circle(img, size=self.shape_size,
+                                  pos=pos, blend_alpha=alpha)
+
         if self.transform:
             img = self.transform(img)
-            
+
         return img, torch.tensor(binary_label, dtype=torch.long)
+
 
 def evaluate(model, loader, criterion):
     model.eval()
@@ -161,14 +176,23 @@ def evaluate(model, loader, criterion):
     }
 
 if __name__ == "__main__":
-    BATCH_SIZE    = 32       
+    BATCH_SIZE    = 32
     EPOCHS        = 15
-    LR            = 1e-4  
+    LR            = 1e-4
     WEIGHT_DECAY  = 1e-4
     DROPOUT       = 0.3
-    SPURIOUS = True
-    GRAD_CLIP     = 1.0     
-    CKPT_PATH    = "best_alexnet_spurious_data_augmentation.pt" if SPURIOUS else "best_alexnet_clean.pt"
+    SPURIOUS      = True
+    GRAD_CLIP     = 1.0
+
+    # ── circle_small_subtle config (matches sweep) ────────────
+    SHAPE_SIZE    = 15                 # "small"
+    BLEND_RANGE   = (0.4, 0.5)         # "subtle"
+    SPURIOUS_PROB = 0.5
+
+    CKPT_PATH     = (
+        "best_alexnet_circle_small_subtle_data_augmentation.pt"
+        if SPURIOUS else "best_alexnet_clean.pt"
+    )
     NUM_WORKERS   = 4
 
     set_seed(10)
@@ -190,21 +214,24 @@ if __name__ == "__main__":
     ])
 
     train_dataset = BinaryChestMNIST(
-        split="train", spurious=SPURIOUS, spurious_prob=0.5,
-        star_size=10, randomize_star_pos=True, transform=train_transforms,
-        download=True, size=224
+        split="train", spurious=SPURIOUS, spurious_prob=SPURIOUS_PROB,
+        shape_size=SHAPE_SIZE, blend_range=BLEND_RANGE,
+        randomize_pos=True, transform=train_transforms,
+        download=True, size=224,
     )
 
     val_dataset = BinaryChestMNIST(
-        split="val", spurious=SPURIOUS, spurious_prob=0.5,
-        star_size=10, randomize_star_pos=True, transform=val_transforms,
-        download=True, size=224
+        split="val", spurious=SPURIOUS, spurious_prob=SPURIOUS_PROB,
+        shape_size=SHAPE_SIZE, blend_range=BLEND_RANGE,
+        randomize_pos=True, transform=val_transforms,
+        download=True, size=224,
     )
 
     test_dataset = BinaryChestMNIST(
-        split="test", spurious=False, spurious_prob=0.5,
-        star_size=10, randomize_star_pos=True, transform=val_transforms,
-        download=True, size=224
+        split="test", spurious=False, spurious_prob=SPURIOUS_PROB,
+        shape_size=SHAPE_SIZE, blend_range=BLEND_RANGE,
+        randomize_pos=True, transform=val_transforms,
+        download=True, size=224,
     )
 
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,
@@ -213,7 +240,7 @@ if __name__ == "__main__":
                               num_workers=NUM_WORKERS, pin_memory=True)
     test_loader  = DataLoader(test_dataset,  batch_size=BATCH_SIZE, shuffle=False,
                               num_workers=NUM_WORKERS, pin_memory=True)
-    
+
     model = AlexNet(dropout=DROPOUT).to(device)
 
     criterion  = nn.BCEWithLogitsLoss()
@@ -233,7 +260,7 @@ if __name__ == "__main__":
             nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP)
             optimizer.step()
             epoch_loss += loss.item()
-        
+
         scheduler.step()
 
         m = evaluate(model, val_loader, criterion)
@@ -267,5 +294,3 @@ if __name__ == "__main__":
         f"  AUC:        {m['auc']:.4f}\n"
         f"{'─'*60}"
     )
- 
- 
