@@ -63,11 +63,7 @@ def get_named_conv_layers(model):
 
 # %%
 def register_activation_hooks(model):
-    """
-    Attach forward hooks to every Conv2d and ReLU so we can capture
-    the feature maps that flow through the network.
-    Returns (activations dict, list of hook handles).
-    """
+    """Attach forward hooks to Conv2d/ReLU/pool layers; returns (activations, handles)."""
     activations = {}
     handles = []
  
@@ -98,10 +94,8 @@ def load_image(path=None):
     if path:
         pil = Image.open(path).convert("RGB")
     else:
-        # Structured noise: more interesting than uniform random
         rng = np.random.default_rng(42)
         arr = rng.integers(0, 256, (224, 224, 3), dtype=np.uint8)
-        # Add some low-freq structure so filters have something to respond to
         for c in range(3):
             arr[:, :, c] = (arr[:, :, c] * 0.4 +
                             np.tile(rng.integers(0, 256, (28, 28)),
@@ -123,10 +117,7 @@ def denormalize(tensor):
 
 # %%
 def visualize_filters(model, save_path="alexnet_filters.png"):
-    """
-    Visualize the learned convolutional filter weights for every Conv2d layer.
-    Each tile = one filter (shown as its RGB channels or grayscale mean).
-    """
+    """Plot learned conv filter weights; each tile is one filter."""
     conv_layers = get_named_conv_layers(model)
     n_layers = len(conv_layers)
  
@@ -138,14 +129,12 @@ def visualize_filters(model, save_path="alexnet_filters.png"):
         weights = layer.weight.data.clone()        # [out_ch, in_ch, kH, kW]
         n_filters = weights.shape[0]
  
-        # Normalise each filter to [0,1] for display
         w_min, w_max = weights.min(), weights.max()
         weights = (weights - w_min) / (w_max - w_min + 1e-8)
- 
+
         n_cols = min(n_filters, 32)
         n_rows_inner = math.ceil(n_filters / n_cols)
- 
-        # Outer subplot for the layer label
+
         ax_label = fig.add_subplot(n_layers, 1, row_idx + 1)
         ax_label.axis("off")
         ax_label.set_title(
@@ -153,8 +142,7 @@ def visualize_filters(model, save_path="alexnet_filters.png"):
             f"|   stride: {layer.stride}   pad: {layer.padding}",
             loc="left", color=ACCENT, fontsize=11, pad=8,
         )
- 
-        # Inner grid of filter tiles
+
         gs_inner = gridspec.GridSpecFromSubplotSpec(
             n_rows_inner, n_cols, subplot_spec=ax_label.get_subplotspec(),
             hspace=0.05, wspace=0.05,
@@ -164,15 +152,13 @@ def visualize_filters(model, save_path="alexnet_filters.png"):
             ax = fig.add_subplot(gs_inner[fi // n_cols, fi % n_cols])
             f = weights[fi]                          # [in_ch, kH, kW]
             if f.shape[0] == 3:
-                # Only the first layer of a 3-channel input model
                 img = f[:3].permute(1, 2, 0).numpy()
                 img = (img - img.min()) / (img.max() - img.min() + 1e-8)
                 ax.imshow(img, interpolation="nearest")
             else:
-                # Single-channel input OR deeper layers with many input channels
                 img = f.mean(0).numpy()
                 img = (img - img.min()) / (img.max() - img.min() + 1e-8)
-                ax.imshow(img, cmap="gray", interpolation="nearest")          # grayscale mean
+                ax.imshow(img, cmap="gray", interpolation="nearest")
             ax.axis("off")
  
     plt.tight_layout()
@@ -185,10 +171,7 @@ def visualize_filters(model, save_path="alexnet_filters.png"):
 # %%
 def visualize_activations(model, image_tensor, pil_image,
                           save_path="alexnet_activations.png"):
-    """
-    Run a forward pass and display the feature maps produced at each
-    Conv2d + ReLU + Pool layer (up to 32 channels each).
-    """
+    """Forward pass and plot feature maps at each conv/relu/pool (up to 32 channels)."""
     activations, handles = register_activation_hooks(model)
  
     with torch.no_grad():
@@ -198,7 +181,6 @@ def visualize_activations(model, image_tensor, pil_image,
     for h in handles:
         h.remove()
  
-    # Keep only the layers we want to show, in order
     interesting = {k: v for k, v in activations.items()
                    if any(t in k for t in ("features.", "avgpool"))}
  
@@ -228,7 +210,6 @@ def visualize_activations(model, image_tensor, pil_image,
             hspace=0.05, wspace=0.05,
         )
  
-        # Input thumbnail on the left
         ax_in = fig.add_subplot(gs_inner[:, 0])
         ax_in.imshow(pil_image.resize((56, 56)))
         ax_in.set_title("input", fontsize=7, color=SUBTLE, pad=2)
@@ -252,11 +233,7 @@ def visualize_activations(model, image_tensor, pil_image,
 
 def visualize_saliency(model, image_tensor, pil_image,
                        save_path="alexnet_saliency.png"):
-    """
-    Vanilla gradient saliency: backprop from the top predicted class score
-    to the input image. Bright pixels = pixels the model is most sensitive to.
-    Also shows Guided Backprop for sharper spatial attribution.
-    """
+    """Vanilla saliency and guided backprop; saves a 4-panel plot."""
     # ── Vanilla saliency ──────────────────────────────────────────────────────
     inp = image_tensor.clone().requires_grad_(True)
     output = model(inp)
@@ -271,8 +248,7 @@ def visualize_saliency(model, image_tensor, pil_image,
     saliency_np = saliency_max.numpy()
  
     # ── Guided Backprop ───────────────────────────────────────────────────────
-    # Replace ReLU backward with a guided version (only pass positive gradients
-    # that come from positive activations).
+    # clamp to positive gradients only (guided backprop)
     saved_relu_bwd = {}
  
     def guided_hook_factory(module):

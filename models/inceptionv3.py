@@ -1,7 +1,6 @@
 import os
 import random
 import numpy as np
-import pandas as pd
 from PIL import Image, ImageDraw
 from medmnist import ChestMNIST
 import torch
