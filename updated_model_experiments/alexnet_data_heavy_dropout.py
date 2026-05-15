@@ -178,7 +178,7 @@ if __name__ == "__main__":
     EPOCHS        = 15
     LR            = 1e-4  
     WEIGHT_DECAY  = 1e-4
-    DROPOUT       = 0.9
+    DROPOUT       = 0.7 
     SPURIOUS = True
     GRAD_CLIP     = 1.0     
     CKPT_PATH    = "best_alexnet_spurious_heavy_dropout.pt" if SPURIOUS else "best_alexnet_clean.pt"
