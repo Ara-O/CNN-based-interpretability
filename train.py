@@ -1,5 +1,10 @@
 from shared import run_training
 from models.alexnet import AlexNet
+from models.densenet121 import DenseNet121
+from models.resnet50 import resnet50
+from models.vgg16 import VGG16
+from models.inceptionv3 import Inception3
+
 import os
 import json
 
@@ -18,6 +23,50 @@ if __name__ == "__main__":
         ("alexnet_pos0.5_neg0.0", lambda: AlexNet(dropout=0.3),
             dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
         ("alexnet_pos0.5_neg0.1", lambda: AlexNet(dropout=0.3),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # DenseNet121
+        ("densenet121_clean",
+            lambda: DenseNet121(dropout=0.5),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("densenet121_pos0.5_neg0.0",
+            lambda: DenseNet121(dropout=0.5),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("densenet121_pos0.5_neg0.1",
+            lambda: DenseNet121(dropout=0.5),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # ResNet50
+        ("resnet50_clean",
+            lambda: resnet50(),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("resnet50_pos0.5_neg0.0",
+            lambda: resnet50(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("resnet50_pos0.5_neg0.1",
+            lambda: resnet50(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # InceptionV3
+        ("inceptionv3_clean",
+            lambda: Inception3(),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("inceptionv3_pos0.5_neg0.0",
+            lambda: Inception3(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("inceptionv3_pos0.5_neg0.1",
+            lambda: Inception3(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # VGG16
+        ("vgg16_clean",
+            lambda: VGG16(),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("vgg16_pos0.5_neg0.0",
+            lambda: VGG16(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("vgg16_pos0.5_neg0.1",
+            lambda: VGG16(),
             dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
     ]
 

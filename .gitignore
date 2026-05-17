@@ -5,3 +5,4 @@ data/
 models/*.pt
 *.pt
 trained_models/
+__pycache__/
