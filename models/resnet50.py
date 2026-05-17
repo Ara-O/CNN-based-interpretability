@@ -99,5 +99,5 @@ class ResNet(nn.Module):
         return self.fc(x)
 
 
-# def resnet50(dropout: float = 0.5):
-    # return ResNet(Bottleneck, [3, 4, 6, 3], dropout=dropout)
+def resnet50(dropout: float = 0.5):
+    return ResNet(Bottleneck, [3, 4, 6, 3], dropout=dropout)

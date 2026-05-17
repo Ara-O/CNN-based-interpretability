@@ -9,6 +9,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.alexnet import AlexNet
+from models.densenet121 import DenseNet121
+from models.resnet50 import resnet50
+from models.inceptionv3 import Inception3
+from models.vgg16 import VGG16
 from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import v2
 from torch.optim import Adam
@@ -37,7 +41,7 @@ def draw_star(img, size=20, pos=(10, 10), color=255):
 
 
 class BinaryChestMNIST(Dataset):
-    def __init__(self, split, spurious_prob_pos=0.5, spurious_prob_neg=0.1,
+    def __init__(self, split, spurious_prob_pos=0.0, spurious_prob_neg=0.0,
                  star_size=20, randomize_star_pos=False, transform=None, **kwargs):
         self.dataset = ChestMNIST(split=split, **kwargs)
         self.spurious_prob_pos = spurious_prob_pos
@@ -148,7 +152,6 @@ def train(
         transform=EVAL_TF, **common)
     
     test_ds  = BinaryChestMNIST("test",
-        spurious=False, 
         transform=EVAL_TF, **common)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
@@ -218,16 +221,59 @@ def train(
 
 if __name__ == "__main__":
     EXPERIMENTS = [
+        # AlexNet
         ("alexnet_clean",
             lambda: AlexNet(dropout=0.3),
             dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-
         ("alexnet_pos0.5_neg0.0",
             lambda: AlexNet(dropout=0.3),
             dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-
         ("alexnet_pos0.5_neg0.1",
             lambda: AlexNet(dropout=0.3),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # DenseNet121
+        ("densenet121_clean",
+            lambda: DenseNet121(dropout=0.5),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("densenet121_pos0.5_neg0.0",
+            lambda: DenseNet121(dropout=0.5),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("densenet121_pos0.5_neg0.1",
+            lambda: DenseNet121(dropout=0.5),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # ResNet50
+        ("resnet50_clean",
+            lambda: resnet50(),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("resnet50_pos0.5_neg0.0",
+            lambda: resnet50(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("resnet50_pos0.5_neg0.1",
+            lambda: resnet50(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # InceptionV3
+        ("inceptionv3_clean",
+            lambda: Inception3(),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("inceptionv3_pos0.5_neg0.0",
+            lambda: Inception3(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("inceptionv3_pos0.5_neg0.1",
+            lambda: Inception3(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+
+        # VGG16
+        ("vgg16_clean",
+            lambda: VGG16(),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        ("vgg16_pos0.5_neg0.0",
+            lambda: VGG16(),
+            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("vgg16_pos0.5_neg0.1",
+            lambda: VGG16(),
             dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
     ]
 
