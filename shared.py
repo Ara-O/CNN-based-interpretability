@@ -57,7 +57,7 @@ def run_training(
     spurious_prob_pos, spurious_prob_neg,
     shape="star", star_size=20, color=None, blend_range=(0.5, 0.5),
     epochs=20, batch_size=32, lr=1e-4, weight_decay=1e-4,
-    grad_clip=1.0, seed=10, num_workers=4, img_size=224,
+    grad_clip=1.0, seed=10, num_workers=0, img_size=224,
     ckpt_dir=os.path.join("..", "trained_models"),
     results_dir=os.path.join("..", "results"),
     device=None,
