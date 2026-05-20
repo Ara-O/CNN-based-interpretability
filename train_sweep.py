@@ -35,7 +35,7 @@ if __name__ == "__main__":
                             spurious_prob_pos=SPUR_P_POS,
                             spurious_prob_neg=SPUR_P_NEG,
                             shape=shape, color=None, star_size=size_px, blend_range=blend_range,
-                            epochs=10,
+                            epochs=20,
                         )
                     except Exception as e:
                         spur_m = {"error": str(e)}

@@ -9,11 +9,10 @@ import os
 import json
 
 
-BRIGHT_STAR = dict(
+STAR = dict(
     shape="star",
     star_size=20,
-    color=255,
-    blend_range=(1.0, 1.0),
+    blend_range=(0.8, 1.0),
 )
 
 if __name__ == "__main__":
@@ -22,52 +21,56 @@ if __name__ == "__main__":
             dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
         ("alexnet_pos0.5_neg0.0", lambda: AlexNet(dropout=0.3),
             dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        ("alexnet_pos0.0_neg0.5", lambda: AlexNet(dropout=0.3),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.5)),
+        ("alexnet_pos0.1_neg0.5", lambda: AlexNet(dropout=0.3),
+            dict(spurious_prob_pos=0.1, spurious_prob_neg=0.5)),
         ("alexnet_pos0.5_neg0.1", lambda: AlexNet(dropout=0.3),
             dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
 
         # DenseNet121
-        ("densenet121_clean",
-            lambda: DenseNet121(dropout=0.5),
-            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        ("densenet121_pos0.5_neg0.0",
-            lambda: DenseNet121(dropout=0.5),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        ("densenet121_pos0.5_neg0.1",
-            lambda: DenseNet121(dropout=0.5),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+        # ("densenet121_clean",
+        #     lambda: DenseNet121(dropout=0.5),
+        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        # ("densenet121_pos0.5_neg0.0",
+        #     lambda: DenseNet121(dropout=0.5),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        # ("densenet121_pos0.5_neg0.1",
+        #     lambda: DenseNet121(dropout=0.5),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
 
-        # ResNet50
-        ("resnet50_clean",
-            lambda: resnet50(),
-            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        ("resnet50_pos0.5_neg0.0",
-            lambda: resnet50(),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        ("resnet50_pos0.5_neg0.1",
-            lambda: resnet50(),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+        # # ResNet50
+        # ("resnet50_clean",
+        #     lambda: resnet50(),
+        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        # ("resnet50_pos0.5_neg0.0",
+        #     lambda: resnet50(),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        # ("resnet50_pos0.5_neg0.1",
+        #     lambda: resnet50(),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
 
-        # InceptionV3
-        ("inceptionv3_clean",
-            lambda: Inception3(),
-            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        ("inceptionv3_pos0.5_neg0.0",
-            lambda: Inception3(),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        ("inceptionv3_pos0.5_neg0.1",
-            lambda: Inception3(),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+        # # InceptionV3
+        # ("inceptionv3_clean",
+        #     lambda: Inception3(),
+        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        # ("inceptionv3_pos0.5_neg0.0",
+        #     lambda: Inception3(),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        # ("inceptionv3_pos0.5_neg0.1",
+        #     lambda: Inception3(),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
 
-        # VGG16
-        ("vgg16_clean",
-            lambda: VGG16(),
-            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        ("vgg16_pos0.5_neg0.0",
-            lambda: VGG16(),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        ("vgg16_pos0.5_neg0.1",
-            lambda: VGG16(),
-            dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
+        # # VGG16
+        # ("vgg16_clean",
+        #     lambda: VGG16(),
+        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
+        # ("vgg16_pos0.5_neg0.0",
+        #     lambda: VGG16(),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
+        # ("vgg16_pos0.5_neg0.1",
+        #     lambda: VGG16(),
+        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
     ]
 
     summary = {}
@@ -77,7 +80,7 @@ if __name__ == "__main__":
             test_m, _ = run_training(
                 model_fn, run_name,
                 epochs=20,
-                **BRIGHT_STAR,
+                **STAR,
                 **kwargs,
             )
             summary[run_name] = test_m
