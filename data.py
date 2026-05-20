@@ -80,8 +80,8 @@ class BinaryChestMNIST(Dataset):
         self.spurious_prob_neg = spurious_prob_neg
         self.shape = shape
         self.star_size = star_size
-        self.color = color                   # None → local adaptive; int → fixed
-        self.blend_range = blend_range       # (1.0, 1.0) → fully opaque
+        self.color = color                   # None -> local adaptive; int -> fixed
+        self.blend_range = blend_range       # (1.0, 1.0) -> fully opaque
         self.randomize_star_pos = randomize_star_pos
         self.transform = transform
         self.draw_fn = SHAPE_FNS[shape]

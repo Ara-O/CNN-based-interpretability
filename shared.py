@@ -148,7 +148,7 @@ def run_training(
             f"prec: {m['precision']:.4f} | rec: {m['recall']:.4f} | "
             f"F1: {m['f1']:.4f} | AUC: {m['auc']:.4f}")
 
-        saved = m["auc"] > best_auc
+        saved = bool(m["auc"] > best_auc)
         if saved:
             best_auc = m["auc"]
             torch.save(model.state_dict(), ckpt_path)
