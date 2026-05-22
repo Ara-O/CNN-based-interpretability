@@ -9,14 +9,12 @@ import json
 # Three marker shapes
 SHAPES = ["star", "circle", "wave"]
 
-# Three difficulty cases as they appear in Fig. 7 of the original draft
 DIFFICULTY_CONFIGS = {
     "obvious":      dict(star_size=35, blend_range=(0.8, 1.0)),
     "intermediate": dict(star_size=20, blend_range=(0.6, 0.8)),
     "subtle":       dict(star_size=15, blend_range=(0.4, 0.6)),
 }
 
-# (pos, neg) contamination ratios to emphasize the PR signature trend
 CONTAMINATION_RATIOS = [
     (0.5, 0.0),
     (0.5, 0.1),
