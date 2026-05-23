@@ -7,28 +7,29 @@ import os
 import json
 
 # Three marker shapes
-SHAPES = ["star", "circle", "wave"]
+# SHAPES = ["star", "circle", "wave"]
+SHAPES = ["circle", "wave"]
 
 DIFFICULTY_CONFIGS = {
     "obvious":      dict(star_size=35, blend_range=(0.8, 1.0)),
     "intermediate": dict(star_size=20, blend_range=(0.6, 0.8)),
-    "subtle":       dict(star_size=15, blend_range=(0.4, 0.6)),
+    # "subtle":       dict(star_size=15, blend_range=(0.4, 0.6)),
 }
 
 CONTAMINATION_RATIOS = [
     (0.5, 0.0),
-    (0.5, 0.1),
+    # (0.5, 0.1),
     (0.5, 0.3),
-    (0.5, 0.5),
+    # (0.5, 0.5),
     (0.3, 0.5),
-    (0.1, 0.5),
+    # (0.1, 0.5),
     (0.0, 0.5),
 ]
 
 ARCHITECTURES = [
     ("alexnet",     lambda: AlexNet(dropout=0.3)),
     ("inceptionv3", lambda: Inception3(dropout=0.3)),
-    ("resnet50",    lambda: resnet50(dropout=0.3)),
+    # ("resnet50",    lambda: resnet50(dropout=0.3)),
 ]
 
 if __name__ == "__main__":
