@@ -1,0 +1,54 @@
+{
+  "run_name": "alexnet_circle_subtle_pos0.5_neg0.1",
+  "spurious_prob_pos": 0.5,
+  "spurious_prob_neg": 0.1,
+  "shape": "circle",
+  "star_size": 15,
+  "color": null,
+  "blend_range": [
+    0.4,
+    0.6
+  ],
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 0.6393082779594893,
+      "val": {
+        "loss": 0.6257033838845386,
+        "accuracy": 0.654247259114003,
+        "precision": 0.6725034199726402,
+        "recall": 0.47821011673151753,
+        "f1": 0.5589539511085844,
+        "auc": 0.7127732904564608
+      },
+      "saved": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.6151006305723156,
+      "val": {
+        "loss": 0.6151616523238669,
+        "accuracy": 0.6743025225064623,
+        "precision": 0.6417397939717665,
+        "recall": 0.6544747081712062,
+        "f1": 0.6480446927374302,
+        "auc": 0.724405973105089
+      },
+      "saved": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.6063075970981348,
+      "val": {
+        "loss": 0.6955637218605759,
+        "accuracy": 0.6377573758802032,
+        "precision": 0.7078825347758887,
+        "recall": 0.35642023346303503,
+        "f1": 0.474120082815735,
+        "auc": 0.7314997954942158
+      },
+      "saved": true
+    }
+  ],
+  "test": null
+}

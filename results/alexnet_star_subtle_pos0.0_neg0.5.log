@@ -1,0 +1,40 @@
+=== alexnet_star_subtle_pos0.0_neg0.5 | p_pos=0.0, p_neg=0.5 | shape=star size=15 blend=(0.4, 0.6) | epochs=20 ===
+Epoch 01/20 | Train loss: 0.6428 | Val loss: 0.6288 | acc: 0.6544 | prec: 0.6524 | rec: 0.5261 | F1: 0.5824 | AUC: 0.7005
+  -> New best AUC 0.7005, checkpoint saved.
+Epoch 02/20 | Train loss: 0.6215 | Val loss: 0.6274 | acc: 0.6632 | prec: 0.6383 | rec: 0.6115 | F1: 0.6246 | AUC: 0.7139
+  -> New best AUC 0.7139, checkpoint saved.
+Epoch 03/20 | Train loss: 0.6135 | Val loss: 0.6880 | acc: 0.6426 | prec: 0.7031 | rec: 0.3805 | F1: 0.4938 | AUC: 0.7240
+  -> New best AUC 0.7240, checkpoint saved.
+Epoch 04/20 | Train loss: 0.6080 | Val loss: 0.6167 | acc: 0.6630 | prec: 0.6845 | rec: 0.4905 | F1: 0.5715 | AUC: 0.7240
+Epoch 05/20 | Train loss: 0.6031 | Val loss: 0.6051 | acc: 0.6837 | prec: 0.6619 | rec: 0.6327 | F1: 0.6470 | AUC: 0.7344
+  -> New best AUC 0.7344, checkpoint saved.
+Epoch 06/20 | Train loss: 0.5992 | Val loss: 0.6146 | acc: 0.6680 | prec: 0.6976 | rec: 0.4860 | F1: 0.5729 | AUC: 0.7293
+Epoch 07/20 | Train loss: 0.5930 | Val loss: 0.6039 | acc: 0.6882 | prec: 0.6712 | rec: 0.6263 | F1: 0.6479 | AUC: 0.7383
+  -> New best AUC 0.7383, checkpoint saved.
+Epoch 08/20 | Train loss: 0.5850 | Val loss: 0.6003 | acc: 0.6970 | prec: 0.6713 | rec: 0.6638 | F1: 0.6675 | AUC: 0.7448
+  -> New best AUC 0.7448, checkpoint saved.
+Epoch 09/20 | Train loss: 0.5788 | Val loss: 0.5894 | acc: 0.7010 | prec: 0.6767 | rec: 0.6650 | F1: 0.6708 | AUC: 0.7524
+  -> New best AUC 0.7524, checkpoint saved.
+Epoch 10/20 | Train loss: 0.5727 | Val loss: 0.5929 | acc: 0.6950 | prec: 0.6993 | rec: 0.5864 | F1: 0.6379 | AUC: 0.7530
+  -> New best AUC 0.7530, checkpoint saved.
+Epoch 11/20 | Train loss: 0.5962 | Val loss: 0.5993 | acc: 0.6906 | prec: 0.6637 | rec: 0.6584 | F1: 0.6610 | AUC: 0.7460
+Epoch 12/20 | Train loss: 0.5854 | Val loss: 0.5909 | acc: 0.6923 | prec: 0.7015 | rec: 0.5716 | F1: 0.6299 | AUC: 0.7567
+  -> New best AUC 0.7567, checkpoint saved.
+Epoch 13/20 | Train loss: 0.5638 | Val loss: 0.5537 | acc: 0.7147 | prec: 0.6572 | rec: 0.7885 | F1: 0.7169 | AUC: 0.7894
+  -> New best AUC 0.7894, checkpoint saved.
+Epoch 14/20 | Train loss: 0.5378 | Val loss: 0.5227 | acc: 0.7322 | prec: 0.7280 | rec: 0.6634 | F1: 0.6942 | AUC: 0.8095
+  -> New best AUC 0.8095, checkpoint saved.
+Epoch 15/20 | Train loss: 0.5168 | Val loss: 0.5157 | acc: 0.7301 | prec: 0.6592 | rec: 0.8506 | F1: 0.7428 | AUC: 0.8215
+  -> New best AUC 0.8215, checkpoint saved.
+Epoch 16/20 | Train loss: 0.4991 | Val loss: 0.5045 | acc: 0.7488 | prec: 0.6937 | rec: 0.8089 | F1: 0.7469 | AUC: 0.8298
+  -> New best AUC 0.8298, checkpoint saved.
+Epoch 17/20 | Train loss: 0.4851 | Val loss: 0.4877 | acc: 0.7542 | prec: 0.7026 | rec: 0.8037 | F1: 0.7497 | AUC: 0.8340
+  -> New best AUC 0.8340, checkpoint saved.
+Epoch 18/20 | Train loss: 0.4763 | Val loss: 0.4703 | acc: 0.7646 | prec: 0.7332 | rec: 0.7644 | F1: 0.7485 | AUC: 0.8464
+  -> New best AUC 0.8464, checkpoint saved.
+Epoch 19/20 | Train loss: 0.4648 | Val loss: 0.4675 | acc: 0.7656 | prec: 0.7390 | rec: 0.7549 | F1: 0.7469 | AUC: 0.8493
+  -> New best AUC 0.8493, checkpoint saved.
+Epoch 20/20 | Train loss: 0.4617 | Val loss: 0.4657 | acc: 0.7648 | prec: 0.7272 | rec: 0.7786 | F1: 0.7520 | AUC: 0.8481
+
+Loading best checkpoint for test evaluation ...
+Test | loss: 0.6317 | acc: 0.6726 | prec: 0.6241 | rec: 0.7566 | F1: 0.6840 | AUC: 0.7401

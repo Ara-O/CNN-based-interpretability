@@ -29,7 +29,7 @@ CONTAMINATION_RATIOS = [
 ARCHITECTURES = [
     ("alexnet",     lambda: AlexNet(dropout=0.3)),
     ("inceptionv3", lambda: Inception3(dropout=0.3)),
-    # ("resnet50",    lambda: resnet50(dropout=0.3)),
+    ("resnet50",    lambda: resnet50(dropout=0.3)),
 ]
 
 if __name__ == "__main__":
