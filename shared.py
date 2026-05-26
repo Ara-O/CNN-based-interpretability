@@ -61,6 +61,7 @@ def run_training(
     ckpt_dir=os.path.join("..", "trained_models"),
     results_dir=os.path.join("..", "results"),
     device=None,
+    train_tf=None, eval_tf=None,
 ):
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -72,16 +73,18 @@ def run_training(
     log_path  = os.path.join(results_dir, f"{run_name}.log")
     json_path = os.path.join(results_dir, f"{run_name}.json")
 
-    train_tf = v2.Compose([
-        v2.RandomHorizontalFlip(),
-        v2.RandomRotation(10),
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-    ])
-    eval_tf = v2.Compose([
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-    ])
+    if train_tf is None:
+        train_tf = v2.Compose([
+            v2.RandomHorizontalFlip(),
+            v2.RandomRotation(10),
+            v2.ToImage(),
+            v2.ToDtype(torch.float32, scale=True),
+        ])
+    if eval_tf is None:
+        eval_tf = v2.Compose([
+            v2.ToImage(),
+            v2.ToDtype(torch.float32, scale=True),
+        ])
 
     open(log_path, "w").close()
     def log(msg=""):

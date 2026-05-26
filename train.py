@@ -17,61 +17,8 @@ STAR = dict(
 
 if __name__ == "__main__":
     EXPERIMENTS = [
-        # ("alexnet_clean",         lambda: AlexNet(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        # ("alexnet_pos0.5_neg0.3", lambda: AlexNet(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.3)),
-        # ("alexnet_pos0.3_neg0.5", lambda: AlexNet(dropout=0.3),
-        #     dict(spurious_prob_pos=0.3, spurious_prob_neg=0.5)),
-        # ("alexnet_pos0.1_neg0.5", lambda: AlexNet(dropout=0.3),
-        #     dict(spurious_prob_pos=0.1, spurious_prob_neg=0.5)),
-        # ("alexnet_pos0.5_neg0.1", lambda: AlexNet(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
-
-        # ("densenet121_clean",         lambda: DenseNet121(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        # ("densenet121_pos0.5_neg0.0", lambda: DenseNet121(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        # ("densenet121_pos0.0_neg0.5", lambda: DenseNet121(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.5)),
-        # ("densenet121_pos0.1_neg0.5", lambda: DenseNet121(dropout=0.3),
-        #     dict(spurious_prob_pos=0.1, spurious_prob_neg=0.5)),
-        # ("densenet121_pos0.5_neg0.1", lambda: DenseNet121(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
-
-        # ("resnet50_clean",         lambda: resnet50(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        # ("resnet50_pos0.5_neg0.0", lambda: resnet50(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        # ("resnet50_pos0.0_neg0.5", lambda: resnet50(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.5)),
-        # ("resnet50_pos0.1_neg0.5", lambda: resnet50(dropout=0.3),
-        #     dict(spurious_prob_pos=0.1, spurious_prob_neg=0.5)),
-        # ("resnet50_pos0.5_neg0.1", lambda: resnet50(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
-
-        # ("vgg16_clean",         lambda: VGG16(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        # ("vgg16_pos0.5_neg0.0", lambda: VGG16(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        # ("vgg16_pos0.0_neg0.5", lambda: VGG16(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.5)),
-        # ("vgg16_pos0.1_neg0.5", lambda: VGG16(dropout=0.3),
-        #     dict(spurious_prob_pos=0.1, spurious_prob_neg=0.5)),
-        # ("vgg16_pos0.5_neg0.1", lambda: VGG16(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
-
-        # ("inceptionv3_clean",         lambda: Inception3(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
-        # ("inceptionv3_pos0.5_neg0.0", lambda: Inception3(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.0)),
-        # ("inceptionv3_pos0.0_neg0.5", lambda: Inception3(dropout=0.3),
-        #     dict(spurious_prob_pos=0.0, spurious_prob_neg=0.5)),
-        # ("inceptionv3_pos0.1_neg0.5", lambda: Inception3(dropout=0.3),
-        #     dict(spurious_prob_pos=0.1, spurious_prob_neg=0.5)),
-        # ("inceptionv3_pos0.5_neg0.1", lambda: Inception3(dropout=0.3),
-        #     dict(spurious_prob_pos=0.5, spurious_prob_neg=0.1)),
-
+        ("alexnet_clean",         lambda: AlexNet(dropout=0.3),
+            dict(spurious_prob_pos=0.0, spurious_prob_neg=0.0)),
     ]
 
     summary = {}
