@@ -12,7 +12,7 @@ SHAPES = ["circle", "wave"]
 
 DIFFICULTY_CONFIGS = {
     "obvious":      dict(star_size=35, blend_range=(0.8, 1.0)),
-    "intermediate": dict(star_size=20, blend_range=(0.6, 0.8)),
+    "intermediate": dict(star_size=20, blend_range=(0.6, 0.8)), # or moderate
     # "subtle":       dict(star_size=15, blend_range=(0.4, 0.6)),
 }
 
