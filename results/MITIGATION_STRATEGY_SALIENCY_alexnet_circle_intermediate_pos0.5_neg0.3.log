@@ -1,0 +1,20 @@
+=== MITIGATION_STRATEGY_SALIENCY_alexnet_circle_intermediate_pos0.5_neg0.3 | p_pos=0.5, p_neg=0.3 | shape=circle size=20 blend=(0.6, 0.8) | epochs=20 | lambda_sal=0.2 warmup=2 ===
+Epoch 01/20 | Train loss: 0.6410 | sal=off | Val loss: 0.6255 | acc: 0.6569 | prec: 0.6418 | rec: 0.5683 | F1: 0.6028 | AUC: 0.7046
+  -> New best AUC 0.7046, checkpoint saved.
+Epoch 02/20 | Train loss: 0.6179 | sal=off | Val loss: 0.6239 | acc: 0.6651 | prec: 0.6320 | rec: 0.6442 | F1: 0.6380 | AUC: 0.7190
+  -> New best AUC 0.7190, checkpoint saved.
+Epoch 03/20 | Train loss: -1.4565 | sal=on | Val loss: 0.7979 | acc: 0.6149 | prec: 0.7100 | rec: 0.2696 | F1: 0.3909 | AUC: 0.7216
+  -> New best AUC 0.7216, checkpoint saved.
+Epoch 04/20 | Train loss: -1.4781 | sal=on | Val loss: 0.6198 | acc: 0.6766 | prec: 0.6350 | rec: 0.6918 | F1: 0.6622 | AUC: 0.7323
+  -> New best AUC 0.7323, checkpoint saved.
+Epoch 05/20 | Train loss: -1.4875 | sal=on | Val loss: 0.6013 | acc: 0.6825 | prec: 0.6789 | rec: 0.5825 | F1: 0.6270 | AUC: 0.7400
+  -> New best AUC 0.7400, checkpoint saved.
+Epoch 06/20 | Train loss: -1.4943 | sal=on | Val loss: 0.6095 | acc: 0.6762 | prec: 0.6228 | rec: 0.7436 | F1: 0.6778 | AUC: 0.7394
+Epoch 07/20 | Train loss: -1.5021 | sal=on | Val loss: 0.6005 | acc: 0.6860 | prec: 0.6875 | rec: 0.5767 | F1: 0.6272 | AUC: 0.7471
+  -> New best AUC 0.7471, checkpoint saved.
+Epoch 08/20 | Train loss: -1.5102 | sal=on | Val loss: 0.5968 | acc: 0.6920 | prec: 0.6780 | rec: 0.6239 | F1: 0.6498 | AUC: 0.7509
+  -> New best AUC 0.7509, checkpoint saved.
+Epoch 09/20 | Train loss: -1.5160 | sal=on | Val loss: 0.5918 | acc: 0.6977 | prec: 0.6761 | rec: 0.6533 | F1: 0.6645 | AUC: 0.7525
+  -> New best AUC 0.7525, checkpoint saved.
+Epoch 10/20 | Train loss: -1.5211 | sal=on | Val loss: 0.5900 | acc: 0.6981 | prec: 0.6776 | rec: 0.6506 | F1: 0.6638 | AUC: 0.7532
+  -> New best AUC 0.7532, checkpoint saved.

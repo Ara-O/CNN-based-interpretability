@@ -1,0 +1,10 @@
+{
+  "MITIGATION_STRATEGY_DATA_AUGMENTATION_alexnet_circle_intermediate_pos0.5_neg0.3_data_aug": {
+    "loss": 0.6089307690447892,
+    "accuracy": 0.6762804796505149,
+    "precision": 0.6766917293233082,
+    "recall": 0.5911470728224655,
+    "f1": 0.6310334315618331,
+    "auc": 0.7365952816693913
+  }
+}

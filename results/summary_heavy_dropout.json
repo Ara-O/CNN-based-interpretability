@@ -1,0 +1,10 @@
+{
+  "MITIGATION_STRATEGY_HEAVY_DROPOUT_alexnet_heavy_dropout_circle_intermediate_pos0.5_neg0.3": {
+    "loss": 0.5902066049497692,
+    "accuracy": 0.6962956358935497,
+    "precision": 0.7032591940101299,
+    "recall": 0.6079961922893861,
+    "f1": 0.6521672537907796,
+    "auc": 0.7562389887476533
+  }
+}
